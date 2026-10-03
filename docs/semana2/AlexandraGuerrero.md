@@ -1,8 +1,8 @@
 # Historias de usuario individuales
 
-**Nombre:** Escribe aquí tu nombre
+**Nombre:** Alexandra Guerrero
 
-**Usuario de GitHub:** Escribe aquí tu usuario
+**Usuario de GitHub:** AlexaGCode
 
 ---
 
