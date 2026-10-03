@@ -11,6 +11,7 @@
 > Entre 5 y 7 historias en formato "como [rol] quiero [acción] para [beneficio]", pensadas desde distintos roles o necesidades del producto que el equipo está diseñando. Si escribes menos de 7, borra las líneas que no uses (mínimo 5).
 
 **Componente:** C01 - Núcleo de interoperabilidad W3C VC y Open Badges 3.0
+
 1. Como Servicio de emisión quiero construir una credencial verificable de asistencia a semillero a partir de datos autorizados para obtener una representación interoperable y consistente del reconocimiento.
 2. Como Servicio de emisión quiero validar la conformidad estructural de la credencial antes de firmarla para impedir la emisión de credenciales incompletas o incompatibles con el perfil adoptado.
 3. Como Emisor autorizado quiero firmar una credencial estructuralmente conforme con el mecanismo criptográfico adoptado para producir evidencia verificable de autenticidad e integridad.
