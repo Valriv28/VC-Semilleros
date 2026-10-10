@@ -1,4 +1,4 @@
-# Entregable 3 — Functional Proof
+# Functional Proof
 
 ## 1. Front construido
 
