@@ -2,9 +2,34 @@
 
 ## 1. Front construido
 
-**Estado de integración: pendiente de verificación.** Andres
+**Pantallas** 
 
-**Información por integrar desde el responsable del frontend:**  Juan
+**Home** HU-C05-01: 
+
+![Home](./Imagenes/Home.png)
+
+**Gestion Semilleros** HU-C05-02: 
+
+![Administrador 1](./Imagenes/Administrador%201.png)
+![Administrador 2](./Imagenes/Administrador%202.png)
+![Administrador 3](./Imagenes/Administrador%203.png)
+
+**Gestion Asistencia vigente y validacion** HU-C05-03: 
+
+![Docente 1](./Imagenes/Docente%201.png)
+![Docente 2](./Imagenes/Docente%202.png)
+
+**Gestion Emision Autorizado de Credenciales** HU-C05-05: 
+
+![Titular 1](./Imagenes/Titular%201.png)
+
+**Consulta de Credenciales** HU-C05-06: 
+
+![Titular 2](./Imagenes/Titular%202.png)
+
+**Consultar Auditoria** HU-C05-08: 
+
+![Titular 3](./Imagenes/Titular%203.png)
 
 ## 2. Decisión técnica
 
