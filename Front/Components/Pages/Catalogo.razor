@@ -1,0 +1,60 @@
+﻿@page "/catalogo"
+@inject NavigationManager Navigation
+
+<PageTitle>Catálogo - VC-Semilleros</PageTitle>
+
+<div class="text-center my-4">
+    <h2 class="fw-bold text-white mb-2">Catálogo de Pantallas y Módulos</h2>
+    <p class="text-secondary">Selecciona un módulo del sistema VC-Semilleros para continuar.</p>
+</div>
+
+<div class="row g-4 mt-2">
+    <!-- Card 1: Titular -->
+    <div class="col-md-4">
+        <div class="card-custom p-4 text-center h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="fs-1 mb-2">🌱</div>
+                <h4 class="fw-bold text-white">Titular</h4>
+                <p class="text-secondary small">Consultar y obtener mi credencial emitida.</p>
+            </div>
+            <button class="btn btn-outline-custom w-100 mt-3" @onclick='() => NavegarA("/Titular")'>
+                Ingresar
+            </button>
+        </div>
+    </div>
+
+    <!-- Card 2: Administrador -->
+<div class="col-md-4">
+    <div class="card-custom p-4 text-center h-100 d-flex flex-column justify-content-between">
+        <div>
+            <div class="fs-1 mb-2">🎓</div>
+            <h4 class="fw-bold text-white">Administrador</h4>
+            <p class="text-secondary small">Gestionar semilleros, credenciales y usuarios del portal.</p>
+        </div>
+        <button class="btn btn-outline-custom w-100 mt-3" @onclick='() => NavegarA("/Admin")'>
+            Ingresar
+        </button>
+    </div>
+</div>
+
+    <!-- Card 3: Responsable -->
+    <div class="col-md-4">
+    <div class="card-custom p-4 text-center h-100 d-flex flex-column justify-content-between">
+        <div>
+            <div class="fs-1 mb-2">🛡️</div>
+            <h4 class="fw-bold text-white">Docente</h4>
+            <p class="text-secondary small">Registrar y consultar informacion del Semillero.</p>
+        </div>
+        <button class="btn btn-outline-custom w-100 mt-3" @onclick='() => NavegarA("/Docente")'>
+            Ingresar
+        </button>
+    </div>
+</div>
+</div>
+
+@code {
+    private void NavegarA(string ruta)
+    {
+        Navigation.NavigateTo(ruta);
+    }
+}

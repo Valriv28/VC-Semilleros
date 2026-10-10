@@ -1,0 +1,230 @@
+﻿@page "/Docente"
+
+<PageTitle>Portal del Docente - VC-Semilleros</PageTitle>
+
+<div class="container-fluid p-0">
+    <div class="row g-0" style="min-height: 80vh;">
+        <!-- Sidebar Navigation Lateral -->
+        <div class="col-md-3 col-lg-2 bg-dark border-end border-secondary p-3">
+            <div class="mb-4 text-white fw-bold fs-6">
+                <span class="text-primary me-2">🛡️</span> Módulo Docente
+            </div>
+            
+            <div class="nav flex-column nav-pills gap-1">
+                <button class="nav-link text-start text-white @(seccionActiva == "asistencia" ? "active bg-primary" : "")" 
+                        @onclick='() => CambiarSeccion("asistencia")'>
+                    📅 Asistencia
+                </button>
+                <button class="nav-link text-start text-white @(seccionActiva == "criterios" ? "active bg-primary" : "")" 
+                        @onclick='() => CambiarSeccion("criterios")'>
+                    📋 Criterios Vigentes
+                </button>
+                <button class="nav-link text-start text-white @(seccionActiva == "evaluacion" ? "active bg-primary" : "")" 
+                        @onclick='() => CambiarSeccion("evaluacion")'>
+                    ⚡ Evaluación y Elegibilidad
+                </button>
+            </div>
+        </div>
+
+        <!-- Área Principal de Contenido -->
+        <div class="col-md-9 col-lg-10 p-4">
+            @if (seccionActiva == "asistencia")
+            {
+                <div class="card-custom p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h4 class="fw-bold text-white m-0">Registro y Consulta de Asistencia</h4>
+                            <p class="text-secondary small mb-0">Control de asistencia a sesiones del semillero de investigación.</p>
+                        </div>
+                        <button class="btn btn-primary-custom btn-sm" @onclick="GuardarAsistencia">
+                            💾 Guardar Asistencia
+                        </button>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small">Seleccionar Sesión / Fecha</label>
+                            <input type="date" class="form-control bg-dark text-white border-secondary" value="2026-10-10" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small">Tema de la Sesión</label>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" value="Revisión de Avances en Proyectos y Publicaciones" />
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-dark align-middle mb-0">
+                            <thead>
+                                <tr class="text-secondary small">
+                                    <th>PARTICIPANTE</th>
+                                    <th>DOCUMENTO</th>
+                                    <th>ASISTENCIA (%)</th>
+                                    <th>ESTADO EN SESIÓN</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var p in participantes)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@p.Nombre</td>
+                                        <td class="fw-mono text-secondary">@p.Documento</td>
+                                        <td>@p.PorcentajeAsistencia%</td>
+                                        <td>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" @bind="p.AsistioHoy" id="@p.Documento">
+                                                <label class="form-check-label @(p.AsistioHoy ? "text-success" : "text-danger")" for="@p.Documento">
+                                                    @(p.AsistioHoy ? "Presente" : "Ausente")
+                                                </label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+            else if (seccionActiva == "criterios")
+            {
+                <div class="card-custom p-4">
+                    <h4 class="fw-bold text-white mb-2">Criterios Vigentes de Emisión</h4>
+                    <p class="text-secondary small mb-4">Requisitos obligatorios que debe cumplir un estudiante para ser elegible a la credencial.</p>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="p-3 bg-dark border border-secondary rounded">
+                                <small class="text-secondary d-block">Asistencia Mínima</small>
+                                <h3 class="fw-bold text-primary mt-1 mb-0">80%</h3>
+                                <small class="text-white-50">Sesiones registradas en el periodo</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-dark border border-secondary rounded">
+                                <small class="text-secondary d-block">Entregables Entregados</small>
+                                <h3 class="fw-bold text-success mt-1 mb-0">100%</h3>
+                                <small class="text-white-50">Informe o ponencias del semillero</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-dark border border-secondary rounded">
+                                <small class="text-secondary d-block">Permanencia Mínima</small>
+                                <h3 class="fw-bold text-warning mt-1 mb-0">6 Meses</h3>
+                                <small class="text-white-50">Participación continua activa</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (seccionActiva == "evaluacion")
+            {
+                <div class="card-custom p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h4 class="fw-bold text-white m-0">Evaluación de Elegibilidad</h4>
+                            <p class="text-secondary small mb-0">Comprueba automáticamente qué participantes cumplen con los criterios antes de solicitar la emisión.</p>
+                        </div>
+                        <button class="btn btn-primary-custom btn-sm" @onclick="EjecutarEvaluacion">
+                            ⚡ Ejecutar Evaluación
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-dark align-middle mb-0">
+                            <thead>
+                                <tr class="text-secondary small">
+                                    <th>PARTICIPANTE</th>
+                                    <th>ASISTENCIA</th>
+                                    <th>ENTREGABLES</th>
+                                    <th>ELEGIBILIDAD</th>
+                                    <th>ACCIÓN</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var p in participantes)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@p.Nombre</td>
+                                        <td>@p.PorcentajeAsistencia%</td>
+                                        <td>@(p.EntregablesCompletos ? "Aprobado" : "Pendiente")</td>
+                                        <td>
+                                            @if (p.EsElegible)
+                                            {
+                                                <span class="badge bg-success-subtle text-success border border-success rounded-pill px-3 py-1">
+                                                    ● Cumple Criterios
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 py-1">
+                                                    ✕ No Elegible
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (p.EsElegible)
+                                            {
+                                                <button class="btn btn-outline-custom btn-sm" @onclick="() => SolicitarEmision(p.Nombre)">
+                                                    Solicitar Emisión
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-outline-secondary btn-sm" disabled>
+                                                    Incompleto
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string seccionActiva = "asistencia";
+
+    private class Participante
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Documento { get; set; } = string.Empty;
+        public int PorcentajeAsistencia { get; set; }
+        public bool AsistioHoy { get; set; }
+        public bool EntregablesCompletos { get; set; }
+        public bool EsElegible { get; set; }
+    }
+
+    private List<Participante> participantes = new()
+    {
+        new Participante { Nombre = "Ana María Torres Vega", Documento = "1020304050", PorcentajeAsistencia = 85, AsistioHoy = true, EntregablesCompletos = true, EsElegible = true },
+        new Participante { Nombre = "Juan Pablo Gómez", Documento = "1098765432", PorcentajeAsistencia = 60, AsistioHoy = false, EntregablesCompletos = false, EsElegible = false },
+        new Participante { Nombre = "Laura Sofia Restrepo", Documento = "1035421890", PorcentajeAsistencia = 90, AsistioHoy = true, EntregablesCompletos = true, EsElegible = true }
+    };
+
+    private void CambiarSeccion(string seccion)
+    {
+        seccionActiva = seccion;
+    }
+
+    private void GuardarAsistencia()
+    {
+        // Lógica de guardado
+    }
+
+    private void EjecutarEvaluacion()
+    {
+        foreach (var p in participantes)
+        {
+            p.EsElegible = p.PorcentajeAsistencia >= 80 && p.EntregablesCompletos;
+        }
+    }
+
+    private void SolicitarEmision(string nombre)
+    {
+        // Lógica de solicitud
+    }
+}

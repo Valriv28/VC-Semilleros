@@ -1,0 +1,138 @@
+﻿@page "/Titular"
+
+<PageTitle>Portal del Titular - VC-Semilleros</PageTitle>
+
+<!-- Navegación por pestañas (Tabs) -->
+<div class="border-bottom border-secondary mb-4">
+    <ul class="nav nav-tabs border-0 gap-2">
+        <li class="nav-item">
+            <button class="nav-link @(pestanaActiva == "mis-credenciales" ? "active bg-dark text-white border-primary border-bottom-0 fw-bold" : "text-secondary border-0")" 
+                    @onclick='() => CambiarPestana("mis-credenciales")'>
+                Mis Credenciales
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link @(pestanaActiva == "ver-credencial" ? "active bg-dark text-white border-primary border-bottom-0 fw-bold" : "text-secondary border-0")" 
+                    @onclick='() => CambiarPestana("ver-credencial")'>
+                Ver Credencial
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link @(pestanaActiva == "compartir" ? "active bg-dark text-white border-primary border-bottom-0 fw-bold" : "text-secondary border-0")" 
+                    @onclick='() => CambiarPestana("compartir")'>
+                Compartir
+            </button>
+        </li>
+    </ul>
+</div>
+
+@if (pestanaActiva == "ver-credencial")
+{
+    <div class="mb-4">
+        <h2 class="fw-bold text-white mb-2">Credencial Digital</h2>
+        <span class="badge bg-success-subtle text-success border border-success rounded-pill px-3 py-1">
+            ● Válida
+        </span>
+    </div>
+
+    <!-- Credencial estilo Card Gradient -->
+    <div class="card border-0 rounded-4 p-4 text-white mb-4 shadow-lg" 
+         style="background: linear-gradient(135deg, #059669 0%, #0284C7 50%, #1D4ED8 100%); max-width: 720px;">
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <small class="text-white-50 text-uppercase fw-semibold tracking-wider">CREDENCIAL DIGITAL VERIFICABLE</small>
+                <div class="fw-mono small">CRED-2024-0841</div>
+            </div>
+            <div class="bg-white bg-opacity-20 px-3 py-1 rounded-3 fw-bold">
+                VC
+            </div>
+        </div>
+
+        <h3 class="fw-bold mb-1">Participación en Semillero de Investigación</h3>
+        <p class="text-white-50 mb-4">Certificación de Productos & Ponencias</p>
+
+        <div class="row g-3">
+            <div class="col-6">
+                <small class="text-white-50 text-uppercase fw-semibold d-block">TITULAR</small>
+                <span class="fw-bold fs-5">Ana María Torres Vega</span>
+            </div>
+            <div class="col-6">
+                <small class="text-white-50 text-uppercase fw-semibold d-block">INSTITUCIÓN</small>
+                <span class="fw-bold fs-5">VC-Semilleros</span>
+            </div>
+            <div class="col-12 mt-3">
+                <small class="text-white-50 text-uppercase fw-semibold d-block">FECHA DE EMISIÓN</small>
+                <span class="fw-semibold">15 de Junio, 2024</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Información de Verificación -->
+    <div class="row g-4" style="max-width: 720px;">
+        <div class="col-md-6">
+            <div class="card-custom p-4 h-100">
+                <h5 class="fw-bold text-white mb-3">Información de Verificación</h5>
+                <div class="mb-2">
+                    <small class="text-secondary d-block">Identificador</small>
+                    <span class="text-white fw-mono">CRED-2024-0841</span>
+                </div>
+                <div class="mb-2">
+                    <small class="text-secondary d-block">Hash Blockchain</small>
+                    <span class="text-white small fw-mono text-break">0x7f8a9b...c3d4e5f</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card-custom p-4 text-center h-100 d-flex flex-column align-items-center justify-content-center">
+                <div class="bg-white p-2 rounded-3 mb-2">
+                    <!-- Representación simple QR -->
+                    <div class="fs-1 text-dark">🏁</div>
+                </div>
+                <small class="text-secondary">Escanear para validar en red</small>
+            </div>
+        </div>
+    </div>
+}
+else if (pestanaActiva == "mis-credenciales")
+{
+    <div class="mb-4">
+        <h3 class="fw-bold text-white mb-2">Mis Credenciales Registradas</h3>
+        <p class="text-secondary">Lista de certificados y reconocimientos en el semillero.</p>
+    </div>
+
+    <div class="row g-3" style="max-width: 720px;">
+        <div class="col-12">
+            <div class="card-custom p-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold text-white mb-1">Participación en Semillero de Investigación</h5>
+                    <small class="text-secondary">Emitido el 15/06/2024 • Estado: Válida</small>
+                </div>
+                <button class="btn btn-outline-custom btn-sm" @onclick='() => CambiarPestana("ver-credencial")'>
+                    Ver Detalle
+                </button>
+            </div>
+        </div>
+    </div>
+}
+else if (pestanaActiva == "compartir")
+{
+    <div class="card-custom p-4" style="max-width: 720px;">
+        <h4 class="fw-bold text-white mb-3">Compartir Credencial</h4>
+        <p class="text-secondary mb-3">Copia el enlace de verificación pública para adjuntarlo a tu CV o perfil profesional.</p>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control bg-dark text-white border-secondary" value="https://vc-semilleros.org/verify/CRED-2024-0841" readonly />
+            <button class="btn btn-primary-custom">Copiar Enlace</button>
+        </div>
+    </div>
+}
+
+
+@code {
+    private string pestanaActiva = "ver-credencial";
+
+    private void CambiarPestana(string pestana)
+    {
+        pestanaActiva = pestana;
+    }
+}

@@ -1,0 +1,249 @@
+﻿@page "/Admin"
+
+<PageTitle>Portal Administrativo - VC-Semilleros</PageTitle>
+
+<div class="container-fluid p-0">
+    <div class="row g-0" style="min-height: 80vh;">
+        <!-- Sidebar Navigation Lateral -->
+        <div class="col-md-3 col-lg-2 bg-dark border-end border-secondary p-3">
+            <div class="mb-4 text-white fw-bold fs-6">
+                <span class="text-primary me-2">⚙️</span> Panel de Control
+            </div>
+            
+            <div class="nav flex-column nav-pills gap-1">
+                <button class="nav-link text-start text-white @(seccionActiva == "dashboard" ? "active bg-primary" : "")" 
+                        @onclick='() => CambiarSeccion("dashboard")'>
+                    📊 Dashboard
+                </button>
+                <button class="nav-link text-start text-white @(seccionActiva == "credenciales" ? "active bg-primary" : "")" 
+                        @onclick='() => CambiarSeccion("credenciales")'>
+                    📜 Credenciales
+                </button>
+                <button class="nav-link text-start text-white @(seccionActiva == "firmas" ? "active bg-primary" : "")" 
+                        @onclick='() => CambiarSeccion("firmas")'>
+                    ✍️ Comprobar Firmas
+                </button>
+                <button class="nav-link text-start text-white @(seccionActiva == "usuarios" ? "active bg-primary" : "")" 
+                        @onclick='() => CambiarSeccion("usuarios")'>
+                    👥 Usuarios y Roles
+                </button>
+                <button class="nav-link text-start text-white @(seccionActiva == "configuracion" ? "active bg-primary" : "")" 
+                        @onclick='() => CambiarSeccion("configuracion")'>
+                    ⚙️ Configuración
+                </button>
+            </div>
+        </div>
+
+        <!-- Área Principal de Contenido -->
+        <div class="col-md-9 col-lg-10 p-4">
+            @if (seccionActiva == "dashboard")
+            {
+                <!-- Encabezado -->
+                <div class="mb-4">
+                    <h2 class="fw-bold text-white mb-1">Dashboard</h2>
+                    <p class="text-secondary small">Resumen general del sistema de credenciales</p>
+                </div>
+
+                <!-- Tarjetas de Métricas -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4 col-lg-2">
+                        <div class="card-custom p-3 text-center">
+                            <small class="text-secondary d-block">Emitidas</small>
+                            <h3 class="fw-bold text-success mt-1 mb-0">487</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <div class="card-custom p-3 text-center">
+                            <small class="text-secondary d-block">Pend. Firma</small>
+                            <h3 class="fw-bold text-warning mt-1 mb-0">12</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <div class="card-custom p-3 text-center">
+                            <small class="text-secondary d-block">Firmadas</small>
+                            <h3 class="fw-bold text-primary mt-1 mb-0">34</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <div class="card-custom p-3 text-center">
+                            <small class="text-secondary d-block">Suspendidas</small>
+                            <h3 class="fw-bold text-warning mt-1 mb-0">8</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <div class="card-custom p-3 text-center">
+                            <small class="text-secondary d-block">Revocadas</small>
+                            <h3 class="fw-bold text-danger mt-1 mb-0">3</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <div class="card-custom p-3 text-center">
+                            <small class="text-secondary d-block">Solicitudes</small>
+                            <h3 class="fw-bold text-info mt-1 mb-0">15</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tablas de Últimas Credenciales y Alertas -->
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="card-custom p-4">
+                            <h5 class="fw-bold text-white mb-3">Últimas credenciales</h5>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover mb-0 align-middle">
+                                    <thead>
+                                        <tr class="text-secondary small">
+                                            <th>ID</th>
+                                            <th>NOMBRE</th>
+                                            <th>ESTADO</th>
+                                            <th>FECHA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="fw-mono text-secondary">CRED-2024-0841</td>
+                                            <td class="fw-bold">Diploma de Ingeniería en Sistemas</td>
+                                            <td><span class="badge bg-success-subtle text-success border border-success rounded-pill">● Válida</span></td>
+                                            <td class="text-secondary">2024-06-15</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-mono text-secondary">CRED-2024-0842</td>
+                                            <td class="fw-bold">Certificado de Especialización</td>
+                                            <td><span class="badge bg-success-subtle text-success border border-success rounded-pill">● Válida</span></td>
+                                            <td class="text-secondary">2024-08-20</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card-custom p-4">
+                            <h5 class="fw-bold text-white mb-3">Alertas y notificaciones</h5>
+                            <div class="alert alert-warning bg-warning bg-opacity-10 border-warning text-warning small mb-3">
+                                ⚠️ 12 credenciales pendientes de firma por docente.
+                            </div>
+                            <div class="alert alert-info bg-info bg-opacity-10 border-info text-info small mb-0">
+                                ℹ️ 3 certificados por vencer en los próximos 30 días.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (seccionActiva == "credenciales")
+            {
+                <div class="card-custom p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold text-white m-0">Gestión de Credenciales</h4>
+                        <button class="btn btn-primary-custom btn-sm">+ Emitir Nueva Credencial</button>
+                    </div>
+                    <p class="text-secondary small mb-4">Consulta, aprueba, suspende o revoca credenciales del sistema.</p>
+                    <div class="table-responsive">
+                        <table class="table table-dark align-middle">
+                            <thead>
+                                <tr class="text-secondary small">
+                                    <th>CÓDIGO</th>
+                                    <th>TITULAR</th>
+                                    <th>TIPO</th>
+                                    <th>ESTADO</th>
+                                    <th>ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-mono">CRED-2024-0841</td>
+                                    <td>Ana María Torres Vega</td>
+                                    <td>Participación Semillero</td>
+                                    <td><span class="badge bg-success">Activa</span></td>
+                                    <td>
+                                        <button class="btn btn-outline-custom btn-sm py-0">Suspender</button>
+                                        <button class="btn btn-outline-danger btn-sm py-0 ms-1">Revocar</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+            else if (seccionActiva == "firmas")
+            {
+                <div class="card-custom p-4">
+                    <h4 class="fw-bold text-white mb-2">Comprobar y Validar Firmas Digitales</h4>
+                    <p class="text-secondary small mb-4">Verifica la validez matemática y la clave criptográfica de las credenciales firmadas.</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">Ingrese Hash o Identificador de Credencial</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-dark text-white border-secondary" placeholder="Ej: CRED-2024-0841" />
+                            <button class="btn btn-primary-custom">Validar Firma</button>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-dark border border-success rounded text-success small mt-4">
+                        ✓ Criptografía verificada: Firma válida registrada en el nodo institucional.
+                    </div>
+                </div>
+            }
+            else if (seccionActiva == "usuarios")
+            {
+                <div class="card-custom p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold text-white m-0">Gestión de Usuarios y Roles</h4>
+                        <button class="btn btn-primary-custom btn-sm">+ Registrar Usuario</button>
+                    </div>
+                    <p class="text-secondary small mb-4">Asigna permisos de Administrador, Docente o Titular.</p>
+                    
+                    <table class="table table-dark align-middle">
+                        <thead>
+                            <tr class="text-secondary small">
+                                <th>USUARIO</th>
+                                <th>CORREO</th>
+                                <th>ROL</th>
+                                <th>ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Ana María Torres</td>
+                                <td>ana.torres@institucion.edu.co</td>
+                                <td><span class="badge bg-info">Titular</span></td>
+                                <td><button class="btn btn-outline-custom btn-sm py-0">Editar Rol</button></td>
+                            </tr>
+                            <tr>
+                                <td>Carlos Ramírez</td>
+                                <td>carlos.ramirez@institucion.edu.co</td>
+                                <td><span class="badge bg-warning">Docente</span></td>
+                                <td><button class="btn btn-outline-custom btn-sm py-0">Editar Rol</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            }
+             else if (seccionActiva == "configuracion")
+            {
+                <div class="card-custom p-4" style="max-width: 650px;">
+                    <h4 class="fw-bold text-white mb-3">Parámetros Generales de la Plataforma</h4>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">Nombre de la Institución / Semillero</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" value="VC-Semilleros" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-secondary small">Vigor de Credenciales por Defecto (Meses)</label>
+                        <input type="number" class="form-control bg-dark text-white border-secondary" value="12" />
+                    </div>
+                    <button class="btn btn-primary-custom">Guardar Parámetros</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string seccionActiva = "dashboard";
+
+    private void CambiarSeccion(string seccion)
+    {
+        seccionActiva = seccion;
+    }
+}
