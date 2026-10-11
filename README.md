@@ -54,7 +54,12 @@
 
 ### Inicio de sesión
 
-Para ingresar a la aplicación, utiliza las siguientes credenciales de prueba:
 
-- **Correo electrónico:** `usuario@semilleros.com`
-- **Contraseña:** `Semilleros123!`
+Para ingresar a la aplicación, utiliza un correo electrónico que cumpla con el formato institucional y termine en `@edu.co`.
+
+**Ejemplo de correo:** `estudiante@edu.co`
+
+**Contraseña:** Ingresa una contraseña que cumpla con los requisitos establecidos en el formulario.
+
+**Nota:** Actualmente, el inicio de sesión no cuenta con una lógica de autenticación real. 
+Por lo tanto, basta con cumplir los requisitos de formato solicitados en el formulario para ingresar a la aplicación.
