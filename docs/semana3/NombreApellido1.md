@@ -8,28 +8,40 @@
 
 ![Home](./Imagenes/Home.png)
 
+El sistema cumple con la HU, ya que permite al usuario institucional autenticarse en el portal y operar únicamente según los roles que tiene vigentes, restringiendo el acceso a las funciones que no le corresponden.
+
 **Gestion Semilleros** HU-C05-02: 
 
 ![Administrador 1](./Imagenes/Administrador%201.png)
 ![Administrador 2](./Imagenes/Administrador%202.png)
 ![Administrador 3](./Imagenes/Administrador%203.png)
 
+Se cumple con la HU, ya que el portal permite al administrador institucional gestionar semilleros y periodos a través de los contratos de C02 (CA1), sin acceder directamente a su almacenamiento (CA3). Además, el portal muestra los estados y errores de gobierno devueltos por C02, como rechazos por regla o indisponibilidad del servicio, sin simular éxito (CA2).
+
 **Gestion Asistencia vigente y validacion** HU-C05-03: 
 
 ![Docente 1](./Imagenes/Docente%201.png)
 ![Docente 2](./Imagenes/Docente%202.png)
 
+Se cumple con la HU en lo principal, ya que el módulo permite al responsable del semillero registrar y consultar la asistencia de los participantes por sesión, identificando la fecha, el tema y el participante con su documento (CA2). La interfaz separa el registro de asistencia de la evaluación de elegibilidad, que se ejecuta en una sección distinta, por lo que registrar asistencia no declara automáticamente al participante como elegible (CA1).
+
 **Gestion Emision Autorizado de Credenciales** HU-C05-05: 
 
 ![Titular 1](./Imagenes/Titular%201.png)
+
+Le da al emisor la posibilidad de pedir la credencial de un participante que el decida del semillero, con el objetivo de ejecutar el flujo gobernado en una interfaz controlada.
 
 **Consulta de Credenciales** HU-C05-06: 
 
 ![Titular 2](./Imagenes/Titular%202.png)
 
+Se cumple con la HU, ya que el participante puede consultar en el portal su credencial emitida, con su información esencial (identificador, titular, institución y fecha de emisión) y su estado actual “Válida”, asociada a su perfil y con un hash y código QR que respaldan la integridad del documento.
+
 **Consultar Auditoria** HU-C05-08: 
 
 ![Titular 3](./Imagenes/Titular%203.png)
+
+Cumple con la HU al dar un enlace oficial del certificado, siendo adjuntable a tu CV o perfil profesional para que se pueda comprobar su validez técnica según los permisos que haya dado el titular.
 
 ## 2. Decisión técnica
 
