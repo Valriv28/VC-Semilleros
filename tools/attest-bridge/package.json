@@ -1,0 +1,15 @@
+{
+  "name": "attest-bridge",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20.6" },
+  "scripts": {
+    "start": "node --env-file=.env server.mjs",
+    "register-schema": "node --env-file=.env register-schema.mjs",
+    "crear-cuenta": "node crear-cuenta.mjs"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^17.2.1",
+    "express": "^4.21.0"
+  }
+}
