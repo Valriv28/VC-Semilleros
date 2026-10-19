@@ -234,6 +234,7 @@ builder.Services.AddScoped<IRepositorioAdministrador>(_ => new RepositorioAdmini
 builder.Services.AddScoped<IRepositorioUsuario>(_ => new RepositorioUsuarioPostgreSql(cadenaConexion));
 builder.Services.AddScoped<IRepositorioSemillero>(_ => new RepositorioSemilleroPostgreSql(cadenaConexion));
 builder.Services.AddScoped<IRepositorioPeriodo>(_ => new RepositorioPeriodoPostgreSql(cadenaConexion));
+builder.Services.AddScoped<IRepositorioCriterioPeriodo>(_ => new RepositorioCriterioPeriodoPostgreSql(cadenaConexion));
 builder.Services.AddScoped<IRepositorioParticipante>(_ => new RepositorioParticipantePostgreSql(cadenaConexion));
 builder.Services.AddScoped<IRepositorioSesion>(_ => new RepositorioSesionPostgreSql(cadenaConexion));
 builder.Services.AddScoped<IRepositorioAsistencia>(_ => new RepositorioAsistenciaPostgreSql(cadenaConexion));
@@ -251,6 +252,7 @@ builder.Services.AddScoped<IClienteStellar, ClienteStellarProvisional>();
 // Los que solo necesitan interfaces se registran con la forma corta: <interfaz, clase>.
 builder.Services.AddScoped<IServicioSemillero, ServicioSemillero>();
 builder.Services.AddScoped<IServicioPeriodo, ServicioPeriodo>();
+builder.Services.AddScoped<IServicioCriterioPeriodo, ServicioCriterioPeriodo>();
 builder.Services.AddScoped<IServicioAsistencia, ServicioAsistencia>();
 builder.Services.AddScoped<IServicioEvaluacion, ServicioEvaluacion>();
 builder.Services.AddScoped<IServicioAutenticacion, ServicioAutenticacion>();

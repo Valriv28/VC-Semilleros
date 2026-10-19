@@ -1,76 +1,125 @@
 ﻿@page "/login"
 @using System.ComponentModel.DataAnnotations
+@using Front.Servicios
+@inject AutenticacionService Autenticacion
+@inject SesionUsuario Sesion
 @inject NavigationManager Navigation
 
-<PageTitle>@(esRegistro ? "Crear Cuenta" : "Iniciar Sesión") - VC Semilleros</PageTitle>
+<PageTitle>Iniciar Sesión - VC Semilleros</PageTitle>
 
 <div class="login-page-wrapper">
     <div class="login-card-dark text-center">
-        
-        <!-- Botón para regresar al inicio -->
-        <button type="button" class="btn-close-custom" @onclick="VolverAlInicio" title="Regresar al Inicio">✕</button>
+
+        <button type="button"
+                class="btn-close-custom"
+                @onclick="VolverAlInicio"
+                title="Regresar al Inicio">
+            ✕
+        </button>
 
         <div class="mb-2 fs-1">🔒</div>
-        <h3 class="fw-bold text-white mb-1">@(esRegistro ? "Crear Cuenta" : "Iniciar Sesión")</h3>
+        <h3 class="fw-bold text-white mb-1">Iniciar Sesión</h3>
         <p class="text-secondary small mb-4">
-            @(esRegistro ? "Regístrate en VC-Semilleros" : "Acceso al Portal de VC-Semilleros")
+            Acceso al Portal de VC-Semilleros
         </p>
 
-        <EditForm Model="@authModel" OnValidSubmit="HandleSubmit">
+        <EditForm Model="@modelo" OnValidSubmit="Ingresar">
             <DataAnnotationsValidator />
-
-            @if (esRegistro)
-            {
-                <div class="text-start mb-3">
-                    <label class="form-label">Nombre Completo</label>
-                    <InputText class="form-control" @bind-Value="authModel.Nombre" placeholder="Tu nombre" />
-                    <ValidationMessage For="@(() => authModel.Nombre)" class="text-danger small" />
-                </div>
-            }
 
             <div class="text-start mb-3">
                 <label class="form-label">Correo Institucional</label>
-                <InputText class="form-control" @bind-Value="authModel.Email" placeholder="usuario@institucion.edu.co" />
-                <ValidationMessage For="@(() => authModel.Email)" class="text-danger small" />
+                <InputText class="form-control"
+                           @bind-Value="modelo.Correo"
+                           placeholder="usuario@institucion.edu.co"
+                           autocomplete="username" />
+                <ValidationMessage For="@(() => modelo.Correo)"
+                                   class="text-danger small" />
             </div>
 
             <div class="text-start mb-3">
                 <label class="form-label">Contraseña</label>
-                <InputText type="password" class="form-control" @bind-Value="authModel.Password" placeholder="••••••••" />
-                <ValidationMessage For="@(() => authModel.Password)" class="text-danger small" />
+                <InputText type="password"
+                           class="form-control"
+                           @bind-Value="modelo.Contrasena"
+                           placeholder="••••••••"
+                           autocomplete="current-password" />
+                <ValidationMessage For="@(() => modelo.Contrasena)"
+                                   class="text-danger small" />
             </div>
 
-            @if (!string.IsNullOrEmpty(mensaje))
+            @if (!string.IsNullOrWhiteSpace(mensaje))
             {
-                <div class="alert @(esError ? "alert-danger" : "alert-success") py-1 px-2 small mb-3" role="alert">
+                <div class="alert @(esError ? "alert-danger" : "alert-success")
+                            py-1 px-2 small mb-3"
+                     role="alert">
                     @mensaje
                 </div>
             }
 
-            <button type="submit" class="btn btn-primary-custom w-100 py-2 mb-3">
-                @(esRegistro ? "Registrarse" : "Ingresar")
+            <button type="submit"
+                    class="btn btn-primary-custom w-100 py-2 mb-3"
+                    disabled="@cargando">
+                @(cargando ? "Validando..." : "Ingresar")
             </button>
         </EditForm>
-
-        <div class="text-center">
-            <button type="button" class="btn btn-link text-secondary small p-0 text-decoration-none" @onclick="ToggleModo">
-                @(esRegistro ? "¿Ya tienes cuenta? Inicia sesión" : "¿No tienes cuenta? Regístrate aquí")
-            </button>
-        </div>
     </div>
 </div>
 
 @code {
-    private AuthModel authModel = new();
-    private bool esRegistro = false;
+    private ModeloLogin modelo = new();
     private string? mensaje;
-    private bool esError = false;
+    private bool esError;
+    private bool cargando;
 
-    private void ToggleModo()
+    private async Task Ingresar()
     {
-        esRegistro = !esRegistro;
+        if (cargando)
+            return;
+
+        cargando = true;
         mensaje = null;
-        authModel = new AuthModel();
+        esError = false;
+
+        try
+        {
+            var resultado = await Autenticacion.IngresarAsync(
+                modelo.Correo,
+                modelo.Contrasena);
+
+            if (!resultado.Exito)
+            {
+                esError = true;
+                mensaje = resultado.Mensaje;
+                return;
+            }
+
+            // El token y el rol ya están en SesionUsuario.
+            // El destino se ajustará a las rutas y permisos reales.
+            
+            var destino = Sesion.Rol?.Trim().ToUpperInvariant() switch
+           {
+            "ESTUDIANTE" => "/Titular",
+            "DOCENTE" => "/Docente",
+             "COORDINADOR" => "/Coordinador",
+            "ADMINISTRADOR" => "/Admin",
+             _ => null
+        };
+
+if (destino is null)
+{
+    Sesion.CerrarSesion();
+    esError = true;
+    mensaje = "Tu cuenta no tiene un rol válido para ingresar.";
+    return;
+}
+
+Navigation.NavigateTo(destino);
+
+        }
+        finally
+        {
+            cargando = false;
+        }
     }
 
     private void VolverAlInicio()
@@ -78,40 +127,13 @@
         Navigation.NavigateTo("/");
     }
 
-    private async Task HandleSubmit()
+    public sealed class ModeloLogin
     {
-        mensaje = null;
-
-        if (esRegistro)
-        {
-            esError = false;
-            mensaje = "¡Registro exitoso! Ahora puedes iniciar sesión.";
-            esRegistro = false;
-            authModel = new AuthModel();
-        }
-        else
-        {
-            if (authModel.Email == "admin@semilleros.com" && authModel.Password == "123456")
-            {
-                Navigation.NavigateTo("/catalogo");
-            }
-            else
-            {
-                esError = true;
-                mensaje = "Credenciales incorrectas.";
-            }
-        }
-    }
-
-    public class AuthModel
-    {
-        public string? Nombre { get; set; }
-
         [Required(ErrorMessage = "El correo es obligatorio.")]
         [EmailAddress(ErrorMessage = "Ingrese un correo válido.")]
-        public string Email { get; set; } = string.Empty;
+        public string Correo { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La contraseña es obligatoria.")]
-        public string Password { get; set; } = string.Empty;
+        public string Contrasena { get; set; } = string.Empty;
     }
 }

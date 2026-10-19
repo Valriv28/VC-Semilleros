@@ -1,29 +1,63 @@
 ﻿@using Microsoft.AspNetCore.Components.Web
+@using Front.Servicios
 @inherits LayoutComponentBase
 @inject NavigationManager Navigation
+@inject SesionUsuario Sesion
 
 <div class="page">
     <header class="navbar navbar-dark px-4 border-bottom border-secondary d-flex justify-content-between align-items-center">
-        <a class="navbar-brand d-flex align-items-center fw-bold text-white" href="">
+        <a class="navbar-brand d-flex align-items-center fw-bold text-white"
+           href="/">
             <span class="text-primary me-2">●</span> VC-Semilleros
         </a>
+
         <div class="d-flex align-items-center gap-3">
-            <span class="badge-green">Portal Semillero</span>
-            <!-- Botón que redirige a la vista Login.razor -->
-            <button class="btn btn-primary-custom btn-sm" @onclick="IrALogin">
-                Iniciar Sesión
+            <button class="btn btn-outline-success btn-sm"
+                    @onclick="NavegarAPortalPublico">
+                Portal Público
             </button>
+
+            @if (Sesion.EstaAutenticado)
+            {
+                <span class="text-white small">
+                    @Sesion.Nombre (@Sesion.Rol)
+                </span>
+
+                <button class="btn btn-outline-danger btn-sm"
+                        @onclick="CerrarSesion">
+                    Cerrar Sesión
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-primary-custom btn-sm"
+                        @onclick="IrALogin">
+                    Iniciar Sesión
+                </button>
+            }
         </div>
     </header>
 
-    <main class="container my-5">
+    <main class="container my-4">
         @Body
     </main>
 </div>
 
 @code {
+    private void NavegarAPortalPublico()
+    {
+        Navigation.NavigateTo(
+            "/verify/00000000-0000-0000-0000-000000000000");
+    }
+
     private void IrALogin()
     {
         Navigation.NavigateTo("/login");
+    }
+
+    private void CerrarSesion()
+    {
+        Sesion.CerrarSesion();
+        Navigation.NavigateTo("/login", replace: true);
     }
 }

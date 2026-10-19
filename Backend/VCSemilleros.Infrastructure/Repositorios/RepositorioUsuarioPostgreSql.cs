@@ -62,4 +62,27 @@ public class RepositorioUsuarioPostgreSql : IRepositorioUsuario
 
         return await conexion.QuerySingleOrDefaultAsync<Usuario>(sql, new { correo });
     }
+
+
+    public async Task<int> CrearAsync(Usuario usuario)
+    {
+        const string sql = @"
+            INSERT INTO usuario
+                (nombre, correo, rol, creado_por, activo, contrasena_hash)
+            VALUES
+                (@Nombre, @Correo, CAST(@Rol AS rol_usuario),
+                 NULL, TRUE, @ContrasenaHash)
+            RETURNING id;";
+
+        await using var conexion = new NpgsqlConnection(_cadenaConexion);
+
+        return await conexion.QuerySingleAsync<int>(sql, new
+        {
+            usuario.Nombre,
+            usuario.Correo,
+            Rol = usuario.Rol.ToString(),
+            usuario.ContrasenaHash
+        });
+    }
+
 }

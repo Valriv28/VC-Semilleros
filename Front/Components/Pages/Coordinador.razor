@@ -1,357 +1,477 @@
 ﻿@page "/Coordinador"
+@using System.Text.Json
+@inject Front.Servicios.SesionUsuario Sesion
+@inject Microsoft.AspNetCore.Components.NavigationManager Navigation
+@inject Front.Servicios.SemillerosService SemillerosService
+@inject Front.Servicios.PeriodosService PeriodosService
+@inject Front.Servicios.EvaluacionesService EvaluacionesService
+@inject Front.Servicios.CredencialesService CredencialesService
+@inject Front.Servicios.AdministracionService Administracion
 
 <PageTitle>Portal del Coordinador - VC-Semilleros</PageTitle>
 
-<div class="container-fluid p-0">
-    <div class="row g-0" style="min-height: 80vh;">
-        <!-- Sidebar Navigation Lateral -->
-        <div class="col-md-3 col-lg-2 bg-dark border-end border-secondary p-3">
-            <div class="mb-4 text-white fw-bold fs-6">
-                <span class="text-primary me-2">🎯</span> Módulo Coordinador
-            </div>
-            
-            <div class="nav flex-column nav-pills gap-1">
-                <button class="nav-link text-start text-white @(seccionActiva == "armar" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("armar")'>
-                    🎨 Armar Credencial
-                </button>
-                <button class="nav-link text-start text-white @(seccionActiva == "criterios" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("criterios")'>
-                    ⚙️ Definir Criterios
-                </button>
-                <button class="nav-link text-start text-white @(seccionActiva == "elegibilidad" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("elegibilidad")'>
-                    ⚡ Elegibilidad y Emisión
-                </button>
-                <button class="nav-link text-start text-white @(seccionActiva == "revocacion" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("revocacion")'>
-                    🚫 Revocar Credenciales
-                </button>
-            </div>
-        </div>
-
-        <!-- Área Principal de Contenido -->
-        <div class="col-md-9 col-lg-10 p-4">
-            @if (seccionActiva == "armar")
-            {
-                <div class="card-custom p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h4 class="fw-bold text-white m-0">Armar y Diseñar Credencial</h4>
-                            <p class="text-secondary small mb-0">Configura la estructura, títulos y metadatos del certificado del semillero.</p>
-                        </div>
-                        <button class="btn btn-primary-custom btn-sm" @onclick="GuardarPlantilla">
-                            💾 Guardar Plantilla
-                        </button>
-                    </div>
-
-                    <div class="row g-4">
-                        <div class="col-lg-6">
-                            <div class="mb-3">
-                                <label class="form-label text-secondary small">Nombre del Certificado / Credencial</label>
-                                <input type="text" class="form-control bg-dark text-white border-secondary" @bind="credencialConfig.Titulo" />
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label text-secondary small">Subtítulo / Tipo de Reconocimiento</label>
-                                <input type="text" class="form-control bg-dark text-white border-secondary" @bind="credencialConfig.Subtitulo" />
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label text-secondary small">Descripción de la Actividad</label>
-                                <textarea class="form-control bg-dark text-white border-secondary" rows="3" @bind="credencialConfig.Descripcion"></textarea>
-                            </div>
-                            <div class="row g-3">
-                                <div class="col-6">
-                                    <label class="form-label text-secondary small">Horas Certificadas</label>
-                                    <input type="number" class="form-control bg-dark text-white border-secondary" @bind="credencialConfig.Horas" />
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label text-secondary small">Vigencia (Meses)</label>
-                                    <input type="number" class="form-control bg-dark text-white border-secondary" @bind="credencialConfig.VigenciaMeses" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Vista Previa de la Credencial -->
-                        <div class="col-lg-6">
-                            <label class="form-label text-secondary small d-block mb-2">Vista Previa de la Credencial</label>
-                            <div class="card border-0 rounded-4 p-4 text-white shadow-lg" 
-                                 style="background: linear-gradient(135deg, #059669 0%, #0284C7 50%, #1D4ED8 100%);">
-                                <div class="d-flex justify-content-between align-items-start mb-4">
-                                    <div>
-                                        <small class="text-white-50 text-uppercase fw-semibold tracking-wider">CREDENCIAL DIGITAL VERIFICABLE</small>
-                                        <div class="fw-mono small">CRED-2026-PREVIEW</div>
-                                    </div>
-                                    <div class="bg-white bg-opacity-20 px-3 py-1 rounded-3 fw-bold">
-                                        VC
-                                    </div>
-                                </div>
-
-                                <h3 class="fw-bold mb-1">@credencialConfig.Titulo</h3>
-                                <p class="text-white-50 mb-3">@credencialConfig.Subtitulo</p>
-                                <p class="small text-white-50 mb-4">@credencialConfig.Descripcion</p>
-
-                                <div class="row g-2 pt-2 border-top border-white border-opacity-25">
-                                    <div class="col-6">
-                                        <small class="text-white-50 text-uppercase fw-semibold d-block">HORAS</small>
-                                        <span class="fw-bold">@credencialConfig.Horas Horas</span>
-                                    </div>
-                                    <div class="col-6">
-                                        <small class="text-white-50 text-uppercase fw-semibold d-block">INSTITUCIÓN</small>
-                                        <span class="fw-bold">VC-Semilleros</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+@if (accesoPermitido)
+{
+    <div class="container-fluid p-0">
+        <div class="row g-0" style="min-height:80vh;">
+            <aside class="col-md-3 col-lg-2 bg-dark border-end border-secondary p-3">
+                <div class="mb-4 text-white fw-bold">🎯 Módulo Coordinador</div>
+                <div class="nav flex-column nav-pills gap-1">
+                    <button class="nav-link text-start text-white @(seccionActiva == "criterios" ? "active bg-primary" : "")" @onclick='() => CambiarSeccion("criterios")'>⚙️ Criterios</button>
+                    <button class="nav-link text-start text-white @(seccionActiva == "evaluaciones" ? "active bg-primary" : "")" @onclick='() => CambiarSeccion("evaluaciones")'>⚡ Elegibilidad</button>
+                    <button class="nav-link text-start text-white @(seccionActiva == "emision" ? "active bg-primary" : "")" @onclick='() => CambiarSeccion("emision")'>🎓 Emitir credencial</button>
+                    <button class="nav-link text-start text-white @(seccionActiva == "blockchain" ? "active bg-primary" : "")" @onclick='() => CambiarSeccion("blockchain")'>🔗 Transacciones blockchain</button>
+                    <button class="nav-link text-start text-white @(seccionActiva == "revocacion" ? "active bg-primary" : "")" @onclick='() => CambiarSeccion("revocacion")'>🚫 Revocar credencial</button>
                 </div>
-            }
-            else if (seccionActiva == "criterios")
-            {
-                <div class="card-custom p-4" style="max-width: 750px;">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h4 class="fw-bold text-white m-0">Definir Criterios de Evaluación</h4>
-                            <p class="text-secondary small mb-0">Establece los parámetros mínimos que calcularán la elegibilidad automática.</p>
-                        </div>
-                        <button class="btn btn-primary-custom btn-sm" @onclick="GuardarCriterios">
-                            💾 Guardar Criterios
-                        </button>
-                    </div>
+            </aside>
+            <main class="col-md-9 col-lg-10 p-4">
+                @if (!string.IsNullOrWhiteSpace(mensaje))
+                {
+                    <div class="alert @(esError ? "alert-danger" : "alert-info")" role="alert">@mensaje</div>
+                }
 
-                    <div class="mb-3">
-                        <label class="form-label text-secondary small">Asistencia Mínima Requerida (%)</label>
-                        <input type="number" class="form-control bg-dark text-white border-secondary" @bind="criterios.AsistenciaMinima" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-secondary small">Entregables y Ponencias Requeridas (%)</label>
-                        <input type="number" class="form-control bg-dark text-white border-secondary" @bind="criterios.EntregablesRequeridos" />
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label text-secondary small">Tiempo de Permanencia Mínimo (Meses)</label>
-                        <input type="number" class="form-control bg-dark text-white border-secondary" @bind="criterios.PermanenciaMeses" />
-                    </div>
-
-                    <div class="p-3 bg-dark border border-secondary rounded text-secondary small">
-                        💡 Los estudiantes que cumplan o superen estos valores serán marcados como <strong>Elegibles</strong> para autorización.
-                    </div>
-                </div>
-            }
-            else if (seccionActiva == "elegibilidad")
-            {
-                <div class="card-custom p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h4 class="fw-bold text-white m-0">Evaluación de Elegibilidad y Emisión</h4>
-                            <p class="text-secondary small mb-0">Evalúa candidatos y autoriza la emisión oficial de credenciales digitales.</p>
-                        </div>
-                        <button class="btn btn-primary-custom btn-sm" @onclick="EjecutarEvaluacion">
-                            ⚡ Recalcular Elegibilidad
-                        </button>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-dark align-middle mb-0">
-                            <thead>
-                                <tr class="text-secondary small">
-                                    <th>PARTICIPANTE</th>
-                                    <th>ASISTENCIA</th>
-                                    <th>ENTREGABLES</th>
-                                    <th>ESTADO ELEGIBILIDAD</th>
-                                    <th>AUTORIZACIÓN</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var c in candidatos)
+                <section class="card-custom p-4 mb-4">
+                    <h4 class="text-white fw-bold mb-3">Seleccionar período</h4>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary">Semillero</label>
+                            <select class="form-select bg-dark text-white border-secondary" value="@semilleroId" @onchange="CambiarSemilleroAsync" disabled="@cargando">
+                                <option value="0">Selecciona un semillero</option>
+                                @foreach (var item in semilleros)
                                 {
-                                    <tr>
-                                        <td class="fw-bold">@c.Nombre</td>
-                                        <td>@c.Asistencia%</td>
-                                        <td>@c.Entregables%</td>
-                                        <td>
-                                            @if (c.EsElegible)
-                                            {
-                                                <span class="badge bg-success-subtle text-success border border-success rounded-pill px-3 py-1">
-                                                    ● Elegible
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 py-1">
-                                                    ✕ No Elegible
-                                                </span>
-                                            }
-                                        </td>
-                                        <td>
-                                            @if (c.Emitida)
-                                            {
-                                                <span class="text-success small fw-bold">✓ Credencial Emitida</span>
-                                            }
-                                            else if (c.EsElegible)
-                                            {
-                                                <button class="btn btn-primary-custom btn-sm py-1" @onclick="() => AutorizarEmision(c)">
-                                                    Autorizar Emisión
-                                                </button>
-                                            }
-                                            else
-                                            {
-                                                <button class="btn btn-outline-secondary btn-sm py-1" disabled>
-                                                    No Autorizable
-                                                </button>
-                                            }
-                                        </td>
-                                    </tr>
+                                    <option value="@item.Id">@item.Nombre</option>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            }
-            else if (seccionActiva == "revocacion")
-            {
-                <div class="card-custom p-4">
-                    <h4 class="fw-bold text-white mb-2">Revocación de Credenciales</h4>
-                    <p class="text-secondary small mb-4">Invalida credenciales emitidas previamente por faltas, anulación de proyecto o error.</p>
-
-                    <div class="table-responsive">
-                        <table class="table table-dark align-middle mb-0">
-                            <thead>
-                                <tr class="text-secondary small">
-                                    <th>CÓDIGO</th>
-                                    <th>TITULAR</th>
-                                    <th>FECHA EMISIÓN</th>
-                                    <th>ESTADO</th>
-                                    <th>ACCIÓN</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var cred in credencialesEmitidas)
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary">Período</label>
+                            <select class="form-select bg-dark text-white border-secondary" value="@periodoId" @onchange="CambiarPeriodoAsync" disabled="@(cargando || semilleroId <= 0)">
+                                <option value="0">Selecciona un período</option>
+                                @foreach (var item in periodos)
                                 {
-                                    <tr>
-                                        <td class="fw-mono text-secondary">@cred.Codigo</td>
-                                        <td class="fw-bold">@cred.Titular</td>
-                                        <td>@cred.FechaEmision</td>
-                                        <td>
-                                            @if (cred.Revocada)
-                                            {
-                                                <span class="badge bg-danger">Revocada</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-success">Activa / Válida</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            @if (!cred.Revocada)
-                                            {
-                                                <button class="btn btn-outline-danger btn-sm py-0" @onclick="() => RevocarCredencial(cred)">
-                                                    Revocar Credencial
-                                                </button>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-secondary small">Sin acción</span>
-                                            }
-                                        </td>
-                                    </tr>
+                                    <option value="@item.Id">@item.Nombre (@item.FechaInicio.ToString("yyyy-MM-dd") — @item.FechaFin.ToString("yyyy-MM-dd"))</option>
                                 }
-                            </tbody>
-                        </table>
+                            </select>
+                        </div>
                     </div>
-                </div>
-            }
+                </section>
+
+                @if (seccionActiva == "criterios")
+                {
+                    <section class="card-custom p-4">
+                        <h4 class="text-white fw-bold">Configurar criterios del período</h4>
+                        <p class="text-secondary">La configuración se guarda en PostgreSQL y cada actualización genera una nueva versión.</p>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label text-secondary">Asistencia mínima (%)</label>
+                                <input type="number" min="0" max="100" class="form-control bg-dark text-white border-secondary" @bind="minAsistencia" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-secondary">Entregables requeridos (%)</label>
+                                <input type="number" min="0" max="100" class="form-control bg-dark text-white border-secondary" @bind="entregables" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-secondary">Permanencia (meses)</label>
+                                <input type="number" min="0" class="form-control bg-dark text-white border-secondary" @bind="permanencia" />
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 mt-3">
+                            <button class="btn btn-primary-custom" disabled="@(cargando || periodoId <= 0)" @onclick="GuardarCriteriosAsync">Guardar criterios</button>
+                            <button class="btn btn-outline-light" disabled="@(cargando || periodoId <= 0)" @onclick="CargarCriteriosAsync">Recargar criterios</button>
+                        </div>
+                        @if (criterioVersion > 0)
+                        {
+                            <p class="text-secondary small mt-3 mb-0">Versión @criterioVersion · Definido por usuario @definidoPor · Actualizado: @fechaCriterio</p>
+                        }
+                    </section>
+                }
+                else if (seccionActiva == "evaluaciones" || seccionActiva == "emision")
+                {
+                    <section class="card-custom p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <div>
+                                <h4 class="text-white fw-bold mb-1">@(seccionActiva == "emision" ? "Emitir credenciales" : "Evaluaciones del período")</h4>
+                                <p class="text-secondary small mb-0">La emisión solo se habilita después de que el coordinador declare elegible una evaluación que cumple los criterios.</p>
+                            </div>
+                            <button class="btn btn-outline-light" disabled="@(cargando || periodoId <= 0)" @onclick="CargarEvaluacionesAsync">Actualizar</button>
+                        </div>
+                        @if (evaluaciones.Count == 0)
+                        {
+                            <p class="text-secondary">No hay evaluaciones registradas para este período o aún no has seleccionado uno.</p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover align-middle">
+                                    <thead><tr><th>Evaluación</th><th>Participante</th><th>Asistencia</th><th>Resultado</th><th>Elegibilidad</th><th>Acciones</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var e in evaluaciones)
+                                        {
+                                            <tr>
+                                                <td>@e.Id</td>
+                                                <td>@e.ParticipanteId</td>
+                                                <td>@e.PctAsistencia%</td>
+                                                <td><span class="badge @(e.Cumple ? "bg-success" : "bg-danger")">@(e.Cumple ? "Cumple" : "No cumple")</span></td>
+                                                <td>@(e.ElegibleDeclaradoPor.HasValue ? $"Declarada por {e.ElegibleDeclaradoPor}" : "Pendiente")</td>
+                                                <td>
+                                                    @if (!e.ElegibleDeclaradoPor.HasValue && e.Cumple)
+                                                    {
+                                                        <button class="btn btn-sm btn-outline-success mb-1" disabled="@cargando" @onclick="() => DeclararElegibilidadAsync(e)">Declarar</button>
+                                                    }
+                                                    @if (e.ElegibleDeclaradoPor.HasValue)
+                                                    {
+                                                        var emitida = credencialesEmitidas.FirstOrDefault(c => c.EvaluacionId == e.Id);
+                                                        @if (emitida is not null)
+                                                        {
+                                                            <span class="badge bg-success">Emitida</span>
+                                                            <div class="small text-secondary">@emitida.Codigo</div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button class="btn btn-sm btn-primary" disabled="@cargando" @onclick="() => EmitirAsync(e)">Emitir credencial</button>
+                                                        }
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        @if (emisiones.Count > 0)
+                        {
+                            <h5 class="text-white mt-4">Emisiones realizadas en esta sesión</h5>
+                            <ul class="text-secondary">
+                                @foreach (var item in emisiones) { <li>@item</li> }
+                            </ul>
+                        }
+                    </section>
+                }
+                else if (seccionActiva == "blockchain")
+                {
+                    <section class="card-custom p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <div>
+                                <h4 class="text-white fw-bold mb-1">Transacciones de blockchain</h4>
+                                <p class="text-secondary small mb-0">Registros de anclaje guardados en la base de datos. Solo los registros con hash de transacción tienen enlace al explorador.</p>
+                            </div>
+                            <button class="btn btn-outline-light" disabled="@cargando" @onclick="CargarTransaccionesAsync">Actualizar</button>
+                        </div>
+                        @if (transacciones.Count == 0)
+                        {
+                            <p class="text-secondary">No hay transacciones registradas todavía. Las solicitudes pendientes o fallidas también aparecen si quedaron guardadas en la tabla de anclajes.</p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover align-middle">
+                                    <thead><tr><th>Fecha</th><th>Credencial</th><th>Estado</th><th>Hash de evidencia</th><th>Transacción</th><th>Attestation UID</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var t in transacciones)
+                                        {
+                                            <tr @key="t.Id">
+                                                <td>@t.FechaSolicitud.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                                <td>@t.CredencialCodigo</td>
+                                                <td><span class="badge @(t.Estado == "ANCLADO" ? "bg-success" : t.Estado == "FALLIDO" ? "bg-danger" : "bg-warning text-dark")">@t.Estado</span></td>
+                                                <td><code class="text-white text-break">@t.EvidenciaHash</code></td>
+                                                <td>
+                                                    @if (!string.IsNullOrWhiteSpace(t.TxHash))
+                                                    {
+                                                        <a href="@($"https://stellar.expert/explorer/testnet/tx/{Uri.EscapeDataString(t.TxHash)}")" target="_blank" rel="noopener noreferrer" class="text-info">Ver transacción ↗</a>
+                                                        <div class="small text-secondary text-break">@t.TxHash</div>
+                                                    }
+                                                    else { <span class="text-secondary">Sin hash de transacción</span> }
+                                                </td>
+                                                <td class="text-break">@(string.IsNullOrWhiteSpace(t.AttestationUid) ? "—" : t.AttestationUid)</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </section>
+                }
+                else if (seccionActiva == "revocacion")
+                {
+                    <section class="card-custom p-4" style="max-width:760px;">
+                        <h4 class="text-white fw-bold">Revocar credencial</h4>
+                        <p class="text-secondary">La revocación se registra en el backend. Ingresa el código exacto de una credencial emitida.</p>
+                        <div class="mb-3">
+                            <label class="form-label text-secondary">Código de credencial</label>
+                            <input class="form-control bg-dark text-white border-secondary" @bind="codigoRevocacion" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-secondary">Motivo</label>
+                            <textarea class="form-control bg-dark text-white border-secondary" @bind="motivoRevocacion" maxlength="500"></textarea>
+                        </div>
+                        <button class="btn btn-outline-danger" disabled="@cargando" @onclick="RevocarAsync">Revocar credencial</button>
+                    </section>
+                }
+            </main>
         </div>
     </div>
-</div>
+}
 
 @code {
-    private string seccionActiva = "armar";
+    private bool accesoPermitido;
+    private const string RolPermitido = "COORDINADOR";
+    private string seccionActiva = "criterios";
+    private string mensaje = "";
+    private bool esError;
+    private bool cargando;
+    private int semilleroId;
+    private int periodoId;
+    private List<SemilleroVista> semilleros = new();
+    private List<PeriodoVista> periodos = new();
+    private List<EvaluacionVista> evaluaciones = new();
+    private List<TransaccionBlockchainVista> transacciones = new();
+    private List<CredencialEmitidaVista> credencialesEmitidas = new();
+    private List<string> emisiones = new();
+    private decimal minAsistencia = 80;
+    private decimal entregables = 100;
+    private int permanencia = 6;
+    private int criterioVersion;
+    private int definidoPor;
+    private string fechaCriterio = "";
+    private string codigoRevocacion = "";
+    private string motivoRevocacion = "";
 
-    // Modelo de Configuración de Credencial
-    private class CredencialConfig
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        public string Titulo { get; set; } = "Participación en Semillero de Investigación";
-        public string Subtitulo { get; set; } = "Certificación de Productos & Ponencias";
-        public string Descripcion { get; set; } = "Otorgado por la contribución activa y desarrollo de proyectos de I+D durante el periodo académico.";
-        public int Horas { get; set; } = 120;
-        public int VigenciaMeses { get; set; } = 24;
+        if (!firstRender) return;
+        if (!Sesion.EstaAutenticado) { Navigation.NavigateTo("/login", replace: true); return; }
+        var rol = Sesion.Rol?.Trim().ToUpperInvariant();
+        if (rol != RolPermitido)
+        {
+            Navigation.NavigateTo(rol switch { "ESTUDIANTE" => "/Titular", "DOCENTE" => "/Docente", "ADMINISTRADOR" => "/Admin", _ => "/login" }, replace: true);
+            return;
+        }
+        accesoPermitido = true;
+        await CargarSemillerosAsync();
+        StateHasChanged();
     }
 
-    private CredencialConfig credencialConfig = new();
-
-    // Modelo de Criterios
-    private class CriteriosEvaluacion
-    {
-        public int AsistenciaMinima { get; set; } = 80;
-        public int EntregablesRequeridos { get; set; } = 100;
-        public int PermanenciaMeses { get; set; } = 6;
-    }
-
-    private CriteriosEvaluacion criterios = new();
-
-    // Modelo Candidatos
-    private class Candidato
-    {
-        public string Nombre { get; set; } = string.Empty;
-        public int Asistencia { get; set; }
-        public int Entregables { get; set; }
-        public bool EsElegible { get; set; }
-        public bool Emitida { get; set; }
-    }
-
-    private List<Candidato> candidatos = new()
-    {
-        new Candidato { Nombre = "Ana María Torres Vega", Asistencia = 85, Entregables = 100, EsElegible = true, Emitida = false },
-        new Candidato { Nombre = "Juan Pablo Gómez", Asistencia = 60, Entregables = 50, EsElegible = false, Emitida = false },
-        new Candidato { Nombre = "Laura Sofia Restrepo", Asistencia = 92, Entregables = 100, EsElegible = true, Emitida = true }
-    };
-
-    // Modelo Credenciales Emitidas
-    private class CredencialEmitida
-    {
-        public string Codigo { get; set; } = string.Empty;
-        public string Titular { get; set; } = string.Empty;
-        public string FechaEmision { get; set; } = string.Empty;
-        public bool Revocada { get; set; }
-    }
-
-    private List<CredencialEmitida> credencialesEmitidas = new()
-    {
-        new CredencialEmitida { Codigo = "CRED-2024-0841", Titular = "Ana María Torres Vega", FechaEmision = "2024-06-15", Revocada = false },
-        new CredencialEmitida { Codigo = "CRED-2024-0842", Titular = "Laura Sofia Restrepo", FechaEmision = "2024-08-20", Revocada = false }
-    };
-
-    private void CambiarSeccion(string seccion)
+    private async Task CambiarSeccion(string seccion)
     {
         seccionActiva = seccion;
-    }
-
-    private void GuardarPlantilla() { }
-    private void GuardarCriterios() { }
-
-    private void EjecutarEvaluacion()
-    {
-        foreach (var c in candidatos)
+        if (seccion is "evaluaciones" or "emision")
         {
-            c.EsElegible = c.Asistencia >= criterios.AsistenciaMinima && c.Entregables >= criterios.EntregablesRequeridos;
+            if (periodoId > 0) await CargarEvaluacionesAsync();
+        }
+        else if (seccion == "blockchain")
+        {
+            await CargarTransaccionesAsync();
         }
     }
 
-    private void AutorizarEmision(Candidato c)
+    private async Task CargarTransaccionesAsync()
     {
-        c.Emitida = true;
-        credencialesEmitidas.Add(new CredencialEmitida
+        cargando = true;
+        try
         {
-            Codigo = $"CRED-2026-0{credencialesEmitidas.Count + 1}",
-            Titular = c.Nombre,
-            FechaEmision = DateTime.Now.ToString("yyyy-MM-dd"),
-            Revocada = false
-        });
+            var json = await Administracion.ListarTransaccionesBlockchainAsync<JsonElement>();
+            transacciones = LeerLista<TransaccionBlockchainVista>(json);
+            Mostrar(transacciones.Count == 0 ? "No hay registros de anclaje todavía." : $"Se consultaron {transacciones.Count} registros de anclaje.", false);
+        }
+        catch (Exception ex)
+        {
+            Mostrar($"No se pudieron consultar las transacciones: {ex.Message}", true);
+        }
+        finally { cargando = false; }
     }
 
-    private void RevocarCredencial(CredencialEmitida cred)
+    private async Task CargarSemillerosAsync()
     {
-        cred.Revocada = true;
+        cargando = true;
+        try
+        {
+            var json = await SemillerosService.ListarAsync<JsonElement>();
+            semilleros = LeerLista<SemilleroVista>(json);
+            Mostrar(semilleros.Count == 0 ? "No hay semilleros disponibles." : "", false);
+        }
+        catch (Exception ex) { Mostrar($"No se pudieron cargar los semilleros: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task CambiarSemilleroAsync(ChangeEventArgs e)
+    {
+        int.TryParse(e.Value?.ToString(), out semilleroId);
+        periodoId = 0; periodos.Clear(); evaluaciones.Clear();
+        if (semilleroId <= 0) return;
+        cargando = true;
+        try
+        {
+            var json = await SemillerosService.ListarPeriodosAsync<JsonElement>(semilleroId);
+            periodos = LeerLista<PeriodoVista>(json);
+            Mostrar(periodos.Count == 0 ? "El semillero no tiene períodos registrados." : "", false);
+        }
+        catch (Exception ex) { Mostrar($"No se pudieron cargar los períodos: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task CambiarPeriodoAsync(ChangeEventArgs e)
+    {
+        int.TryParse(e.Value?.ToString(), out periodoId);
+        evaluaciones.Clear(); criterioVersion = 0;
+        if (periodoId <= 0) return;
+        await CargarCriteriosAsync();
+        await CargarEvaluacionesAsync();
+    }
+
+    private async Task CargarCriteriosAsync()
+    {
+        if (periodoId <= 0) return;
+        cargando = true;
+        try
+        {
+            var json = await PeriodosService.ObtenerCriterioVigenteAsync<JsonElement>(periodoId);
+            if (json.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            {
+                Mostrar("Este período aún no tiene criterios configurados.", false);
+                return;
+            }
+            var c = LeerObjeto<CriterioVista>(json);
+            if (c is not null)
+            {
+                minAsistencia = c.MinAsistenciaPct; entregables = c.EntregablesRequeridosPct;
+                permanencia = c.PermanenciaMeses; criterioVersion = c.CriterioVersion;
+                definidoPor = c.DefinidoPor; fechaCriterio = c.FechaActualizacion?.ToString("yyyy-MM-dd HH:mm") ?? "no disponible";
+                Mostrar("Criterios cargados desde el backend.", false);
+            }
+        }
+        catch (HttpRequestException ex) when (ex.Message.Contains("404")) { Mostrar("Este período aún no tiene criterios configurados.", false); }
+        catch (Exception ex) { Mostrar($"No se pudieron cargar los criterios: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task GuardarCriteriosAsync()
+    {
+        if (periodoId <= 0) { Mostrar("Selecciona un período.", true); return; }
+        if (minAsistencia is < 0 or > 100 || entregables is < 0 or > 100 || permanencia < 0)
+        { Mostrar("Los porcentajes deben estar entre 0 y 100 y la permanencia no puede ser negativa.", true); return; }
+        cargando = true;
+        try
+        {
+            var json = await PeriodosService.GuardarCriterioVigenteAsync<object, JsonElement>(periodoId, new {
+                minAsistenciaPct = minAsistencia, entregablesRequeridosPct = entregables, permanenciaMeses = permanencia
+            });
+            var c = json is { ValueKind: not JsonValueKind.Undefined } ? LeerObjeto<CriterioVista>(json) : null;
+            if (c is not null) { criterioVersion = c.CriterioVersion; definidoPor = c.DefinidoPor; }
+            Mostrar("Criterios guardados en el backend.", false);
+            await CargarCriteriosAsync();
+        }
+        catch (Exception ex) { Mostrar($"No se pudieron guardar los criterios: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task CargarEvaluacionesAsync()
+    {
+        if (periodoId <= 0) return;
+        cargando = true;
+        try
+        {
+            var json = await PeriodosService.ListarEvaluacionesAsync<JsonElement>(periodoId);
+            evaluaciones = LeerLista<EvaluacionVista>(json);
+            try
+            {
+                var emitidasJson = await Administracion.ListarCredencialesEmitidasAsync<JsonElement>(periodoId);
+                credencialesEmitidas = LeerLista<CredencialEmitidaVista>(emitidasJson);
+            }
+            catch
+            {
+                // La lista de evaluaciones sigue disponible aunque falle la consulta complementaria.
+                credencialesEmitidas = new();
+            }
+            Mostrar(evaluaciones.Count == 0 ? "No hay evaluaciones registradas para este período." : "Evaluaciones actualizadas.", false);
+        }
+        catch (Exception ex) { Mostrar($"No se pudieron cargar las evaluaciones: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task DeclararElegibilidadAsync(EvaluacionVista e)
+    {
+        if (Sesion.Id is not int id) { Mostrar("No se encontró el identificador de la sesión.", true); return; }
+        cargando = true;
+        try
+        {
+            await EvaluacionesService.DeclararElegibilidadAsync<object, JsonElement>(e.Id, new { declaradoPor = id });
+            Mostrar($"Elegibilidad declarada para la evaluación {e.Id}.", false);
+            await CargarEvaluacionesAsync();
+        }
+        catch (Exception ex) { Mostrar($"No se pudo declarar la elegibilidad: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task EmitirAsync(EvaluacionVista e)
+    {
+        cargando = true;
+        try
+        {
+            var respuesta = await EvaluacionesService.EmitirAsync<JsonElement>(e.Id);
+            if (respuesta is { ValueKind: not JsonValueKind.Undefined })
+            {
+                var codigo = respuesta.TryGetProperty("codigo", out var c) ? c.GetString() : null;
+                emisiones.Insert(0, string.IsNullOrWhiteSpace(codigo) ? $"Evaluación {e.Id}: respuesta recibida." : codigo);
+            }
+            Mostrar($"Solicitud de emisión procesada para la evaluación {e.Id}.", false);
+            await CargarEvaluacionesAsync();
+        }
+        catch (Exception ex) { Mostrar($"No se pudo emitir la credencial: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task RevocarAsync()
+    {
+        if (Sesion.Id is not int id) { Mostrar("No se encontró el identificador de la sesión.", true); return; }
+        if (string.IsNullOrWhiteSpace(codigoRevocacion) || string.IsNullOrWhiteSpace(motivoRevocacion))
+        { Mostrar("Escribe el código y el motivo de revocación.", true); return; }
+        cargando = true;
+        try
+        {
+            await CredencialesService.RevocarAsync<object, JsonElement>(codigoRevocacion.Trim(),
+                new { revocadaPor = id, motivo = motivoRevocacion.Trim() });
+            Mostrar("La credencial fue revocada en el backend.", false);
+            codigoRevocacion = ""; motivoRevocacion = "";
+        }
+        catch (Exception ex) { Mostrar($"No se pudo revocar la credencial: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private void Mostrar(string texto, bool error) { mensaje = texto; esError = error; }
+
+    private static List<T> LeerLista<T>(JsonElement? respuesta)
+    {
+        if (respuesta is null || respuesta.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined) return new();
+        var e = respuesta.Value;
+        if (e.ValueKind == JsonValueKind.Object && e.TryGetProperty("datos", out var datos)) e = datos;
+        if (e.ValueKind != JsonValueKind.Array) return new();
+        return JsonSerializer.Deserialize<List<T>>(e.GetRawText(), Opciones) ?? new();
+    }
+
+    private static T? LeerObjeto<T>(JsonElement e) => e.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
+        ? default : JsonSerializer.Deserialize<T>(e.GetRawText(), Opciones);
+
+    private static readonly JsonSerializerOptions Opciones = new() { PropertyNameCaseInsensitive = true };
+
+    private sealed class SemilleroVista { public int Id { get; set; } public string Nombre { get; set; } = ""; }
+    private sealed class PeriodoVista { public int Id { get; set; } public string Nombre { get; set; } = ""; public DateOnly FechaInicio { get; set; } public DateOnly FechaFin { get; set; } }
+    private sealed class CriterioVista { public int PeriodoId { get; set; } public int CriterioVersion { get; set; } public decimal MinAsistenciaPct { get; set; } public decimal EntregablesRequeridosPct { get; set; } public int PermanenciaMeses { get; set; } public int DefinidoPor { get; set; } public DateTime? FechaActualizacion { get; set; } }
+    private sealed class EvaluacionVista { public int Id { get; set; } public int ParticipanteId { get; set; } public decimal PctAsistencia { get; set; } public bool Cumple { get; set; } public int? ElegibleDeclaradoPor { get; set; } }
+    private sealed class CredencialEmitidaVista
+    {
+        public int EvaluacionId { get; set; }
+        public string Codigo { get; set; } = "";
+        public string Estado { get; set; } = "";
+    }
+    private sealed class TransaccionBlockchainVista
+    {
+        public int Id { get; set; }
+        public string CredencialCodigo { get; set; } = "";
+        public string EvidenciaHash { get; set; } = "";
+        public string? TxHash { get; set; }
+        public string Estado { get; set; } = "";
+        public string? AttestationUid { get; set; }
+        public DateTime FechaSolicitud { get; set; }
+        public DateTime? FechaExpiracion { get; set; }
     }
 }

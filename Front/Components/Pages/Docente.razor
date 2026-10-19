@@ -1,230 +1,1008 @@
 ﻿@page "/Docente"
+@inject Front.Servicios.SesionUsuario Sesion
+@inject Microsoft.AspNetCore.Components.NavigationManager Navigation
+@inject Front.Servicios.SemillerosService ServicioSemilleros
+@inject Front.Servicios.PeriodosService Periodos
+@inject Front.Servicios.SesionesService Sesiones
+@inject Front.Servicios.ParticipantesService ServicioParticipantes
+@inject Front.Servicios.AdministracionService Administracion
 
 <PageTitle>Portal del Docente - VC-Semilleros</PageTitle>
 
-<div class="container-fluid p-0">
-    <div class="row g-0" style="min-height: 80vh;">
-        <!-- Sidebar Navigation Lateral -->
-        <div class="col-md-3 col-lg-2 bg-dark border-end border-secondary p-3">
-            <div class="mb-4 text-white fw-bold fs-6">
-                <span class="text-primary me-2">🛡️</span> Módulo Docente
-            </div>
-            
-            <div class="nav flex-column nav-pills gap-1">
-                <button class="nav-link text-start text-white @(seccionActiva == "asistencia" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("asistencia")'>
-                    📅 Asistencia
-                </button>
-                <button class="nav-link text-start text-white @(seccionActiva == "criterios" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("criterios")'>
-                    📋 Criterios Vigentes
-                </button>
-                <button class="nav-link text-start text-white @(seccionActiva == "evaluacion" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("evaluacion")'>
-                    ⚡ Evaluación y Elegibilidad
-                </button>
-            </div>
-        </div>
-
-        <!-- Área Principal de Contenido -->
-        <div class="col-md-9 col-lg-10 p-4">
-            @if (seccionActiva == "asistencia")
-            {
-                <div class="card-custom p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h4 class="fw-bold text-white m-0">Registro y Consulta de Asistencia</h4>
-                            <p class="text-secondary small mb-0">Control de asistencia a sesiones del semillero de investigación.</p>
-                        </div>
-                        <button class="btn btn-primary-custom btn-sm" @onclick="GuardarAsistencia">
-                            💾 Guardar Asistencia
-                        </button>
-                    </div>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label text-secondary small">Seleccionar Sesión / Fecha</label>
-                            <input type="date" class="form-control bg-dark text-white border-secondary" value="2026-10-10" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-secondary small">Tema de la Sesión</label>
-                            <input type="text" class="form-control bg-dark text-white border-secondary" value="Revisión de Avances en Proyectos y Publicaciones" />
-                        </div>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-dark align-middle mb-0">
-                            <thead>
-                                <tr class="text-secondary small">
-                                    <th>PARTICIPANTE</th>
-                                    <th>DOCUMENTO</th>
-                                    <th>ASISTENCIA (%)</th>
-                                    <th>ESTADO EN SESIÓN</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var p in participantes)
-                                {
-                                    <tr>
-                                        <td class="fw-bold">@p.Nombre</td>
-                                        <td class="fw-mono text-secondary">@p.Documento</td>
-                                        <td>@p.PorcentajeAsistencia%</td>
-                                        <td>
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" @bind="p.AsistioHoy" id="@p.Documento">
-                                                <label class="form-check-label @(p.AsistioHoy ? "text-success" : "text-danger")" for="@p.Documento">
-                                                    @(p.AsistioHoy ? "Presente" : "Ausente")
-                                                </label>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+@if (accesoPermitido)
+{
+    <div class="container-fluid p-0">
+        <div class="row g-0" style="min-height:80vh;">
+            <aside class="col-md-3 col-lg-2 bg-dark border-end border-secondary p-3">
+                <div class="mb-4 text-white fw-bold fs-6">
+                    <span class="text-primary me-2">🛡️</span> Módulo Docente
                 </div>
-            }
-            else if (seccionActiva == "criterios")
-            {
-                <div class="card-custom p-4">
-                    <h4 class="fw-bold text-white mb-2">Criterios Vigentes de Emisión</h4>
-                    <p class="text-secondary small mb-4">Requisitos obligatorios que debe cumplir un estudiante para ser elegible a la credencial.</p>
+
+                <div class="nav flex-column nav-pills gap-1">
+                    <button class="nav-link text-start text-white @(seccionActiva == "asistencia" ? "active bg-primary" : "")"
+                            @onclick='() => CambiarSeccion("asistencia")'>
+                        📅 Asistencia y sesiones
+                    </button>
+                    <button class="nav-link text-start text-white @(seccionActiva == "criterios" ? "active bg-primary" : "")"
+                            @onclick='() => CambiarSeccion("criterios")'>
+                        📋 Criterio vigente
+                    </button>
+                    <button class="nav-link text-start text-white @(seccionActiva == "evaluacion" ? "active bg-primary" : "")"
+                            @onclick='() => CambiarSeccion("evaluacion")'>
+                        ⚡ Evaluaciones
+                    </button>
+                </div>
+            </aside>
+
+            <main class="col-md-9 col-lg-10 p-4">
+                @if (!string.IsNullOrWhiteSpace(mensaje))
+                {
+                    <div class="alert @(esError ? "alert-danger" : "alert-info")" role="alert">
+                        @mensaje
+                    </div>
+                }
+
+                <section class="card-custom p-4 mb-4">
+                    <h4 class="fw-bold text-white mb-3">Seleccionar semillero y período</h4>
 
                     <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="p-3 bg-dark border border-secondary rounded">
-                                <small class="text-secondary d-block">Asistencia Mínima</small>
-                                <h3 class="fw-bold text-primary mt-1 mb-0">80%</h3>
-                                <small class="text-white-50">Sesiones registradas en el periodo</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 bg-dark border border-secondary rounded">
-                                <small class="text-secondary d-block">Entregables Entregados</small>
-                                <h3 class="fw-bold text-success mt-1 mb-0">100%</h3>
-                                <small class="text-white-50">Informe o ponencias del semillero</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 bg-dark border border-secondary rounded">
-                                <small class="text-secondary d-block">Permanencia Mínima</small>
-                                <h3 class="fw-bold text-warning mt-1 mb-0">6 Meses</h3>
-                                <small class="text-white-50">Participación continua activa</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-            else if (seccionActiva == "evaluacion")
-            {
-                <div class="card-custom p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h4 class="fw-bold text-white m-0">Evaluación de Elegibilidad</h4>
-                            <p class="text-secondary small mb-0">Comprueba automáticamente qué participantes cumplen con los criterios antes de solicitar la emisión.</p>
-                        </div>
-                        <button class="btn btn-primary-custom btn-sm" @onclick="EjecutarEvaluacion">
-                            ⚡ Ejecutar Evaluación
-                        </button>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-dark align-middle mb-0">
-                            <thead>
-                                <tr class="text-secondary small">
-                                    <th>PARTICIPANTE</th>
-                                    <th>ASISTENCIA</th>
-                                    <th>ENTREGABLES</th>
-                                    <th>ELEGIBILIDAD</th>
-                                    <th>ACCIÓN</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var p in participantes)
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary">Mi semillero</label>
+                            <select class="form-select bg-dark text-white border-secondary"
+                                    value="@semilleroSeleccionadoId"
+                                    @onchange="CambiarSemilleroAsync"
+                                    disabled="@cargando">
+                                <option value="0">Selecciona un semillero</option>
+                                @foreach (var semillero in semilleros)
                                 {
-                                    <tr>
-                                        <td class="fw-bold">@p.Nombre</td>
-                                        <td>@p.PorcentajeAsistencia%</td>
-                                        <td>@(p.EntregablesCompletos ? "Aprobado" : "Pendiente")</td>
-                                        <td>
-                                            @if (p.EsElegible)
-                                            {
-                                                <span class="badge bg-success-subtle text-success border border-success rounded-pill px-3 py-1">
-                                                    ● Cumple Criterios
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-3 py-1">
-                                                    ✕ No Elegible
-                                                </span>
-                                            }
-                                        </td>
-                                        <td>
-                                            @if (p.EsElegible)
-                                            {
-                                                <button class="btn btn-outline-custom btn-sm" @onclick="() => SolicitarEmision(p.Nombre)">
-                                                    Solicitar Emisión
-                                                </button>
-                                            }
-                                            else
-                                            {
-                                                <button class="btn btn-outline-secondary btn-sm" disabled>
-                                                    Incompleto
-                                                </button>
-                                            }
-                                        </td>
-                                    </tr>
+                                    <option value="@semillero.Id">
+                                        @semillero.Nombre @(semillero.Activo ? "" : "(Inactivo)")
+                                    </option>
                                 }
-                            </tbody>
-                        </table>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary">Período</label>
+                            <select class="form-select bg-dark text-white border-secondary"
+                                    value="@periodoId"
+                                    @onchange="CambiarPeriodoAsync"
+                                    disabled="@(cargando || semilleroSeleccionadoId <= 0)">
+                                <option value="0">Selecciona un período</option>
+                                @foreach (var periodo in periodos)
+                                {
+                                    <option value="@periodo.Id">
+                                        @periodo.Nombre (@periodo.FechaInicio.ToString("yyyy-MM-dd")
+                                        — @periodo.FechaFin.ToString("yyyy-MM-dd"))
+                                    </option>
+                                }
+                            </select>
+                        </div>
                     </div>
-                </div>
-            }
+                </section>
+
+                @if (seccionActiva == "asistencia")
+                {
+                    <section class="card-custom p-4">
+                        <h4 class="fw-bold text-white mb-2">Registro y consulta de asistencia</h4>
+                        <p class="text-secondary small">
+                            Selecciona un período para consultar sus participantes y sesiones.
+                        </p>
+
+                        <hr class="border-secondary" />
+
+                        <h5 class="text-white mb-3">Crear sesión</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label text-secondary">Fecha</label>
+                                <input type="date"
+                                       class="form-control bg-dark text-white border-secondary"
+                                       @bind="fechaSesion" />
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label text-secondary">Tema de la sesión</label>
+                                <input type="text" maxlength="200"
+                                       class="form-control bg-dark text-white border-secondary"
+                                       @bind="temaSesion" />
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button class="btn btn-primary-custom w-100"
+                                        disabled="@(cargando || periodoId <= 0)"
+                                        @onclick="CrearSesionAsync">
+                                    Crear sesión
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8">
+                                <label class="form-label text-secondary">Sesión para registrar asistencia</label>
+                                <select class="form-select bg-dark text-white border-secondary"
+                                        @bind="sesionSeleccionadaId">
+                                    <option value="0">Selecciona una sesión</option>
+                                    @foreach (var sesion in sesiones)
+                                    {
+                                        <option value="@sesion.Id">
+                                            @sesion.Fecha.ToString("yyyy-MM-dd") —
+                                            @(string.IsNullOrWhiteSpace(sesion.Descripcion)
+                                                ? "Sesión sin descripción" : sesion.Descripcion)
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button class="btn btn-outline-light w-100"
+                                        disabled="@(cargando || sesionSeleccionadaId <= 0)"
+                                        @onclick="CargarAsistenciasAsync">
+                                    Consultar asistencia guardada
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold text-white m-0">Participantes del período</h5>
+                            <button class="btn btn-primary-custom btn-sm"
+                                    disabled="@(cargando || sesionSeleccionadaId <= 0 || participantes.Count == 0)"
+                                    @onclick="GuardarAsistenciaAsync">
+                                💾 Guardar asistencia
+                            </button>
+                        </div>
+                        @if (periodoId > 0)
+                        {
+                            <div class="border border-secondary rounded p-3 mb-4">
+                                <h6 class="text-white fw-bold">Inscribir estudiante existente</h6>
+                                <p class="text-secondary small">Selecciona una cuenta con rol ESTUDIANTE que ya esté registrada en la base de datos.</p>
+                                <div class="row g-2">
+                                    <div class="col-md-9">
+                                        <select class="form-select bg-dark text-white border-secondary"
+                                                @bind="estudianteSeleccionadoId"
+                                                disabled="@cargando">
+                                            <option value="0">Selecciona un estudiante disponible</option>
+                                            @foreach (var estudiante in estudiantes.Where(e => !participantes.Any(p => p.EstudianteId == e.Id)))
+                                            {
+                                                <option value="@estudiante.Id">@estudiante.Nombre — @estudiante.Correo</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-success w-100"
+                                                disabled="@(cargando || estudianteSeleccionadoId <= 0)"
+                                                @onclick="InscribirEstudianteAsync">Agregar al período</button>
+                                    </div>
+                                </div>
+                                @if (estudiantes.Count == 0)
+                                {
+                                    <p class="text-warning small mt-2 mb-0">No se pudo cargar la lista de estudiantes existentes.</p>
+                                }
+                            </div>
+                        }
+
+                        @if (periodoId <= 0)
+                        {
+                            <p class="text-secondary">Selecciona un semillero y un período.</p>
+                        }
+                        else if (cargando)
+                        {
+                            <p class="text-secondary">Consultando la API...</p>
+                        }
+                        else if (participantes.Count == 0)
+                        {
+                            <p class="text-secondary">No hay participantes registrados en este período.</p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-dark align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>ID participante</th>
+                                            <th>Estudiante</th>
+                                            <th>Asistencia</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var participante in participantes)
+                                        {
+                                            <tr @key="participante.Id">
+                                                <td>@participante.Id</td>
+                                                <td>
+                                                    @(estudiantes.FirstOrDefault(e => e.Id == participante.EstudianteId)?.Nombre ?? $"Estudiante #{participante.EstudianteId}")
+                                                    <div class="small text-secondary">ID: @participante.EstudianteId</div>
+                                                </td>
+                                                <td>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input"
+                                                               type="checkbox"
+                                                               id="presente-@participante.Id"
+                                                               @bind="participante.Presente" />
+                                                        <label class="form-check-label @(participante.Presente ? "text-success" : "text-danger")"
+                                                               for="presente-@participante.Id">
+                                                            @(participante.Presente ? "Presente" : "Ausente")
+                                                        </label>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </section>
+                }
+                else if (seccionActiva == "criterios")
+                {
+                    <section class="card-custom p-4">
+                        <h4 class="fw-bold text-white mb-2">Criterio vigente</h4>
+                        <p class="text-secondary">
+                            El criterio se consulta desde el período seleccionado.
+                        </p>
+
+                        <button class="btn btn-primary-custom mb-4"
+                                disabled="@(cargando || periodoId <= 0)"
+                                @onclick="CargarCriterioAsync">
+                            Consultar criterio
+                        </button>
+
+                        @if (criterio is not null)
+                        {
+                            <div class="row g-3">
+                                <div class="col-md-4"><div class="p-3 bg-dark border border-secondary rounded h-100"><small class="text-secondary d-block">Asistencia mínima</small><h3 class="text-primary mt-1">@criterio.MinAsistenciaPct%</h3></div></div>
+                                <div class="col-md-4"><div class="p-3 bg-dark border border-secondary rounded h-100"><small class="text-secondary d-block">Entregables requeridos</small><h3 class="text-success mt-1">@criterio.EntregablesRequeridosPct%</h3></div></div>
+                                <div class="col-md-4"><div class="p-3 bg-dark border border-secondary rounded h-100"><small class="text-secondary d-block">Permanencia</small><h3 class="text-warning mt-1">@criterio.PermanenciaMeses meses</h3></div></div>
+                                <div class="col-md-4"><div class="p-3 bg-dark border border-secondary rounded h-100"><small class="text-secondary d-block">Versión</small><h4 class="text-white mt-1">@criterio.CriterioVersion</h4></div></div>
+                                <div class="col-md-4"><div class="p-3 bg-dark border border-secondary rounded h-100"><small class="text-secondary d-block">Definido por usuario</small><h4 class="text-white mt-1">@criterio.DefinidoPor</h4></div></div>
+                                <div class="col-md-4"><div class="p-3 bg-dark border border-secondary rounded h-100"><small class="text-secondary d-block">Última actualización</small><span class="text-white">@criterio.FechaActualizacion?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span></div></div>
+                            </div>
+                            <div class="alert alert-warning mt-3 mb-0">La evaluación automática existente solo calcula la asistencia. El porcentaje de entregables y la permanencia se muestran como configuración, pero aún no se aplican porque el modelo actual no define evidencia de entregables ni cómo calcular la permanencia.</div>
+                        }
+                        else
+                        {
+                            <p class="text-secondary">
+                                @if (periodoId <= 0)
+                                {
+                                    <span>Selecciona primero un período.</span>
+                                }
+                                else
+                                {
+                                    <span>Consulta el criterio. Si no existe, la API puede responder que aún no hay uno vigente.</span>
+                                }
+                            </p>
+                        }
+                    </section>
+                }
+                else if (seccionActiva == "evaluacion")
+                {
+                    <section class="card-custom p-4">
+                        <h4 class="fw-bold text-white mb-2">Evaluación de participantes</h4>
+                        <p class="text-secondary">
+                            La API calcula el porcentaje de asistencia y determina si el participante cumple
+                            el criterio vigente. La elegibilidad sigue siendo una acción del coordinador.
+                        </p>
+
+                        @if (periodoId <= 0)
+                        {
+                            <p class="text-secondary">Selecciona un período.</p>
+                        }
+                        else if (criterio is null)
+                        {
+                            <div class="alert alert-warning">
+                                Primero consulta el criterio vigente de este período.
+                            </div>
+                            <button class="btn btn-primary-custom"
+                                    disabled="@cargando"
+                                    @onclick="CargarCriterioAsync">
+                                Consultar criterio vigente
+                            </button>
+                        }
+                        else if (participantes.Count == 0)
+                        {
+                            <p class="text-secondary">
+                                No hay participantes cargados. Selecciona nuevamente el período para consultar sus participantes.
+                            </p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-dark align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Participante</th>
+                                            <th>Resultado</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var participante in participantes)
+                                        {
+                                            <tr @key="participante.Id">
+                                                <td>
+                                                    Participante #@participante.Id
+                                                    <div class="small text-secondary">
+                                                        Estudiante #@participante.EstudianteId
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    @if (participante.ResultadoEvaluacion is not null)
+                                                    {
+                                                        <div>Asistencia: @participante.ResultadoEvaluacion.PctAsistencia%</div>
+                                                        <span class="badge @(participante.ResultadoEvaluacion.Cumple ? "bg-success" : "bg-danger")">
+                                                            @(participante.ResultadoEvaluacion.Cumple ? "Cumple" : "No cumple")
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-secondary">Sin evaluación en esta sesión</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (participante.ResultadoEvaluacion is null)
+                                                    {
+                                                        <button class="btn btn-primary-custom btn-sm"
+                                                                disabled="@cargando"
+                                                                @onclick="() => EvaluarParticipanteAsync(participante)">
+                                                            Evaluar
+                                                        </button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">Ya evaluado</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </section>
+                }
+            </main>
         </div>
     </div>
-</div>
+}
 
 @code {
+    private bool accesoPermitido;
+    private const string RolPermitido = "DOCENTE";
     private string seccionActiva = "asistencia";
+    private string? mensaje;
+    private bool esError;
+    private bool cargando;
 
-    private class Participante
+    private int semilleroSeleccionadoId;
+    private int periodoId;
+    private int sesionSeleccionadaId;
+    private int estudianteSeleccionadoId;
+    private DateTime fechaSesion = DateTime.Today;
+    private string temaSesion = string.Empty;
+
+    private List<SemilleroVista> semilleros = new();
+    private List<PeriodoVista> periodos = new();
+    private List<ParticipanteVista> participantes = new();
+    private List<UsuarioVista> estudiantes = new();
+    private List<SesionVista> sesiones = new();
+    private CriterioVista? criterio;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        public string Nombre { get; set; } = string.Empty;
-        public string Documento { get; set; } = string.Empty;
-        public int PorcentajeAsistencia { get; set; }
-        public bool AsistioHoy { get; set; }
-        public bool EntregablesCompletos { get; set; }
-        public bool EsElegible { get; set; }
+        if (!firstRender)
+            return;
+
+        if (!Sesion.EstaAutenticado)
+        {
+            Navigation.NavigateTo("/login", replace: true);
+            return;
+        }
+
+        var rolActual = Sesion.Rol?.Trim().ToUpperInvariant();
+
+        if (rolActual != RolPermitido)
+        {
+            var destino = rolActual switch
+            {
+                "ESTUDIANTE" => "/Titular",
+                "COORDINADOR" => "/Coordinador",
+                "ADMINISTRADOR" => "/Admin",
+                _ => "/login"
+            };
+
+            Navigation.NavigateTo(destino, replace: true);
+            return;
+        }
+
+        accesoPermitido = true;
+        await CargarEstudiantesAsync();
+        await CargarSemillerosAsync();
+        StateHasChanged();
     }
-
-    private List<Participante> participantes = new()
-    {
-        new Participante { Nombre = "Ana María Torres Vega", Documento = "1020304050", PorcentajeAsistencia = 85, AsistioHoy = true, EntregablesCompletos = true, EsElegible = true },
-        new Participante { Nombre = "Juan Pablo Gómez", Documento = "1098765432", PorcentajeAsistencia = 60, AsistioHoy = false, EntregablesCompletos = false, EsElegible = false },
-        new Participante { Nombre = "Laura Sofia Restrepo", Documento = "1035421890", PorcentajeAsistencia = 90, AsistioHoy = true, EntregablesCompletos = true, EsElegible = true }
-    };
 
     private void CambiarSeccion(string seccion)
     {
         seccionActiva = seccion;
+        mensaje = null;
     }
 
-    private void GuardarAsistencia()
+    private async Task CargarSemillerosAsync()
     {
-        // Lógica de guardado
-    }
+        cargando = true;
+        mensaje = null;
 
-    private void EjecutarEvaluacion()
-    {
-        foreach (var p in participantes)
+        try
         {
-            p.EsElegible = p.PorcentajeAsistencia >= 80 && p.EntregablesCompletos;
+            var respuesta =
+                await ServicioSemilleros.ListarMiosAsync<System.Text.Json.JsonElement>();
+
+            semilleros = LeerElementos<SemilleroVista>(respuesta)
+                .OrderBy(s => s.Nombre)
+                .ToList();
+
+            if (semilleros.Count == 0)
+                MostrarMensaje("La API no devolvió semilleros para este docente.", false);
+        }
+        catch (Exception ex)
+        {
+            MostrarMensaje($"No se pudieron cargar tus semilleros: {ex.Message}", true);
+        }
+        finally
+        {
+            cargando = false;
         }
     }
 
-    private void SolicitarEmision(string nombre)
+    private async Task CambiarSemilleroAsync(ChangeEventArgs e)
     {
-        // Lógica de solicitud
+        int.TryParse(e.Value?.ToString(), out semilleroSeleccionadoId);
+
+        periodoId = 0;
+        periodos.Clear();
+        participantes.Clear();
+        sesiones.Clear();
+        criterio = null;
+        sesionSeleccionadaId = 0;
+        mensaje = null;
+
+        if (semilleroSeleccionadoId <= 0)
+            return;
+
+        await CargarPeriodosAsync();
+    }
+
+    private async Task CargarPeriodosAsync()
+    {
+        cargando = true;
+        mensaje = null;
+
+        try
+        {
+            var respuesta =
+                await ServicioSemilleros.ListarPeriodosAsync<System.Text.Json.JsonElement>(
+                    semilleroSeleccionadoId);
+
+            periodos = LeerElementos<PeriodoVista>(respuesta)
+                .Where(p => p.Id > 0)
+                .OrderByDescending(p => p.FechaInicio)
+                .ToList();
+
+            if (periodos.Count == 0)
+                MostrarMensaje("Este semillero no tiene períodos disponibles.", false);
+        }
+        catch (Exception ex)
+        {
+            MostrarMensaje($"No se pudieron cargar los períodos: {ex.Message}", true);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CambiarPeriodoAsync(ChangeEventArgs e)
+    {
+        int.TryParse(e.Value?.ToString(), out periodoId);
+
+        participantes.Clear();
+        sesiones.Clear();
+        criterio = null;
+        sesionSeleccionadaId = 0;
+        mensaje = null;
+
+        if (periodoId <= 0)
+            return;
+
+        await CargarPeriodoAsync();
+    }
+
+    private async Task CargarPeriodoAsync()
+    {
+        if (periodoId <= 0)
+        {
+            MostrarMensaje("Selecciona un período válido.", true);
+            return;
+        }
+
+        cargando = true;
+        mensaje = null;
+
+        try
+        {
+            var respuestaParticipantes =
+                await Periodos.ListarParticipantesAsync<System.Text.Json.JsonElement>(periodoId);
+
+            participantes = LeerElementos<ParticipanteVista>(respuestaParticipantes)
+                .Where(p => p.Id > 0)
+                .ToList();
+
+            var respuestaSesiones =
+                await Periodos.ListarSesionesAsync<System.Text.Json.JsonElement>(periodoId);
+
+            sesiones = LeerElementos<SesionVista>(respuestaSesiones)
+                .Where(s => s.Id > 0)
+                .OrderByDescending(s => s.Fecha)
+                .ToList();
+
+            foreach (var participante in participantes)
+            {
+                participante.Presente = false;
+                participante.ResultadoEvaluacion = null;
+            }
+
+            // Recupera evaluaciones guardadas para que una recarga no borre las notas ya calculadas.
+            var respuestaEvaluaciones = await Periodos.ListarEvaluacionesAsync<System.Text.Json.JsonElement>(periodoId);
+            var evaluacionesGuardadas = LeerElementos<EvaluacionPersistidaVista>(respuestaEvaluaciones);
+            foreach (var participante in participantes)
+            {
+                var evaluacion = evaluacionesGuardadas
+                    .Where(e => e.ParticipanteId == participante.Id)
+                    .OrderByDescending(e => e.Id)
+                    .FirstOrDefault();
+                if (evaluacion is not null)
+                {
+                    participante.ResultadoEvaluacion = new ResultadoEvaluacionVista
+                    {
+                        Id = evaluacion.Id,
+                        EvaluacionId = evaluacion.Id,
+                        PctAsistencia = evaluacion.PctAsistencia,
+                        Cumple = evaluacion.Cumple
+                    };
+                }
+                participante.NombreEstudiante = estudiantes.FirstOrDefault(e => e.Id == participante.EstudianteId)?.Nombre ?? "";
+            }
+
+            estudianteSeleccionadoId = 0;
+            sesionSeleccionadaId = sesiones.FirstOrDefault()?.Id ?? 0;
+
+            MostrarMensaje(
+                $"Período cargado. Participantes: {participantes.Count}. Sesiones: {sesiones.Count}.",
+                false);
+        }
+        catch (Exception ex)
+        {
+            MostrarMensaje($"No se pudo consultar el período: {ex.Message}", true);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CargarEstudiantesAsync()
+    {
+        try
+        {
+            var respuesta = await Administracion.ListarUsuariosAsync<System.Text.Json.JsonElement>("ESTUDIANTE");
+            estudiantes = LeerElementos<UsuarioVista>(respuesta).OrderBy(e => e.Nombre).ToList();
+        }
+        catch (Exception ex)
+        {
+            estudiantes = new();
+            MostrarMensaje($"No se pudo cargar la lista de estudiantes: {ex.Message}", true);
+        }
+    }
+
+    private async Task InscribirEstudianteAsync()
+    {
+        if (periodoId <= 0 || estudianteSeleccionadoId <= 0)
+        {
+            MostrarMensaje("Selecciona un período y un estudiante.", true);
+            return;
+        }
+
+        if (participantes.Any(p => p.EstudianteId == estudianteSeleccionadoId))
+        {
+            MostrarMensaje("Ese estudiante ya está inscrito en el período.", true);
+            return;
+        }
+
+        cargando = true;
+        try
+        {
+            await Periodos.RegistrarParticipanteAsync<object, System.Text.Json.JsonElement>(
+                periodoId, new { estudianteId = estudianteSeleccionadoId });
+            estudianteSeleccionadoId = 0;
+            await CargarPeriodoAsync();
+            MostrarMensaje("Estudiante inscrito correctamente en el período.", false);
+        }
+        catch (Exception ex)
+        {
+            MostrarMensaje($"No se pudo inscribir al estudiante: {ex.Message}", true);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CrearSesionAsync()
+    {
+        if (periodoId <= 0)
+        {
+            MostrarMensaje("Selecciona primero un período.", true);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(temaSesion))
+        {
+            MostrarMensaje("Escribe el tema de la sesión.", true);
+            return;
+        }
+
+        cargando = true;
+        mensaje = null;
+
+        try
+        {
+            var peticion = new
+            {
+                fecha = fechaSesion.ToString("yyyy-MM-dd"),
+                descripcion = temaSesion.Trim()
+            };
+
+            await Periodos.RegistrarSesionAsync<object, System.Text.Json.JsonElement>(
+                periodoId, peticion);
+
+            temaSesion = string.Empty;
+            await CargarPeriodoAsync();
+            MostrarMensaje("Sesión registrada. Se actualizó la información del período.", false);
+        }
+        catch (Exception ex)
+        {
+            MostrarMensaje($"No se pudo crear la sesión: {ex.Message}", true);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task GuardarAsistenciaAsync()
+    {
+        if (sesionSeleccionadaId <= 0 || participantes.Count == 0)
+        {
+            MostrarMensaje("Selecciona una sesión y verifica que haya participantes.", true);
+            return;
+        }
+
+        cargando = true;
+        mensaje = null;
+
+        try
+        {
+            var peticion = new
+            {
+                asistencias = participantes.Select(p => new
+                {
+                    participanteId = p.Id,
+                    presente = p.Presente
+                }).ToList()
+            };
+
+            await Sesiones.RegistrarAsistenciasAsync<object, System.Text.Json.JsonElement>(
+                sesionSeleccionadaId, peticion);
+
+            MostrarMensaje("La API recibió el registro de asistencia.", false);
+        }
+        catch (Exception ex)
+        {
+            MostrarMensaje($"No se pudo guardar la asistencia: {ex.Message}", true);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CargarAsistenciasAsync()
+    {
+        if (sesionSeleccionadaId <= 0)
+        {
+            MostrarMensaje("Selecciona una sesión.", true);
+            return;
+        }
+
+        cargando = true;
+        mensaje = null;
+
+        try
+        {
+            var respuesta =
+                await Sesiones.ListarAsistenciasAsync<System.Text.Json.JsonElement>(
+                    sesionSeleccionadaId);
+
+            var registros = LeerElementos<AsistenciaVista>(respuesta);
+            var porParticipante = registros
+                .GroupBy(a => a.ParticipanteId)
+                .ToDictionary(g => g.Key, g => g.Last().Presente);
+
+            foreach (var participante in participantes)
+            {
+                if (porParticipante.TryGetValue(participante.Id, out var presente))
+                    participante.Presente = presente;
+            }
+
+            MostrarMensaje($"Se consultaron {registros.Count} registros de asistencia.", false);
+        }
+        catch (Exception ex)
+        {
+            MostrarMensaje($"No se pudo consultar la asistencia: {ex.Message}", true);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CargarCriterioAsync()
+    {
+        if (periodoId <= 0)
+        {
+            MostrarMensaje("Selecciona primero un período.", true);
+            return;
+        }
+
+        cargando = true;
+        mensaje = null;
+
+        try
+        {
+            var respuesta =
+                await Periodos.ObtenerCriterioVigenteAsync<System.Text.Json.JsonElement>(periodoId);
+
+            criterio = respuesta.ValueKind != System.Text.Json.JsonValueKind.Undefined
+                ? LeerObjeto<CriterioVista>(respuesta)
+                : null;
+
+            MostrarMensaje(
+                criterio is null
+                    ? "La API no devolvió un criterio vigente."
+                    : "Criterio vigente cargado.",
+                criterio is null);
+        }
+        catch (Exception ex)
+        {
+            criterio = null;
+            MostrarMensaje($"No se pudo consultar el criterio: {ex.Message}", true);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task EvaluarParticipanteAsync(ParticipanteVista participante)
+    {
+        if (criterio is null)
+        {
+            MostrarMensaje("Consulta primero el criterio vigente.", true);
+            return;
+        }
+
+        cargando = true;
+        mensaje = null;
+
+        try
+        {
+            var peticion = new
+            {
+                minAsistenciaPct = criterio.MinAsistenciaPct,
+                definidoPor = criterio.DefinidoPor,
+                criterioVersion = criterio.CriterioVersion
+            };
+
+            var respuesta =
+                await ServicioParticipantes.EvaluarAsync<object, System.Text.Json.JsonElement>(
+                    participante.Id, peticion);
+
+            var resultado = LeerObjeto<ResultadoEvaluacionVista>(respuesta);
+
+            if (resultado is null)
+            {
+                MostrarMensaje("La API respondió, pero no fue posible leer el resultado.", true);
+                return;
+            }
+
+            participante.ResultadoEvaluacion = resultado;
+
+            MostrarMensaje(
+                $"Evaluación registrada para el participante #{participante.Id}.",
+                false);
+        }
+        catch (Exception ex)
+        {
+            MostrarMensaje(
+                $"No se pudo evaluar al participante #{participante.Id}: {ex.Message}",
+                true);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void MostrarMensaje(string texto, bool error)
+    {
+        mensaje = texto;
+        esError = error;
+    }
+
+    private static List<T> LeerElementos<T>(System.Text.Json.JsonElement? respuesta)
+    {
+        if (respuesta is null)
+            return new();
+
+        var elemento = respuesta.Value;
+
+        if (elemento.ValueKind == System.Text.Json.JsonValueKind.Array)
+            return DeserializarLista<T>(elemento);
+
+        if (elemento.ValueKind == System.Text.Json.JsonValueKind.Object)
+        {
+            foreach (var propiedad in elemento.EnumerateObject())
+            {
+                if (propiedad.Value.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    return DeserializarLista<T>(propiedad.Value);
+            }
+        }
+
+        return new();
+    }
+
+    private static List<T> DeserializarLista<T>(System.Text.Json.JsonElement arreglo)
+    {
+        var resultado = new List<T>();
+        var opciones = new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        foreach (var elemento in arreglo.EnumerateArray())
+        {
+            try
+            {
+                var objeto = System.Text.Json.JsonSerializer.Deserialize<T>(
+                    elemento.GetRawText(), opciones);
+
+                if (objeto is not null)
+                    resultado.Add(objeto);
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // Omite elementos que no coincidan con el modelo.
+            }
+        }
+
+        return resultado;
+    }
+
+    private static T? LeerObjeto<T>(System.Text.Json.JsonElement elemento)
+    {
+        if (elemento.ValueKind != System.Text.Json.JsonValueKind.Object)
+            return default;
+
+        var opciones = new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        try
+        {
+            // La API puede devolver el objeto directamente o dentro de una propiedad.
+            foreach (var propiedad in elemento.EnumerateObject())
+            {
+                if (propiedad.Value.ValueKind == System.Text.Json.JsonValueKind.Object)
+                {
+                    var anidado = System.Text.Json.JsonSerializer.Deserialize<T>(
+                        propiedad.Value.GetRawText(), opciones);
+
+                    if (anidado is not null)
+                        return anidado;
+                }
+            }
+
+            return System.Text.Json.JsonSerializer.Deserialize<T>(
+                elemento.GetRawText(), opciones);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return default;
+        }
+    }
+
+    private sealed class SemilleroVista
+    {
+        public int Id { get; set; }
+        public int ResponsableId { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public bool Activo { get; set; }
+    }
+
+    private sealed class PeriodoVista
+    {
+        public int Id { get; set; }
+        public int SemilleroId { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public DateOnly FechaInicio { get; set; }
+        public DateOnly FechaFin { get; set; }
+    }
+
+    private sealed class ParticipanteVista
+    {
+        public int Id { get; set; }
+        public int PeriodoId { get; set; }
+        public int EstudianteId { get; set; }
+        public string NombreEstudiante { get; set; } = "";
+        public bool Presente { get; set; }
+        public ResultadoEvaluacionVista? ResultadoEvaluacion { get; set; }
+    }
+
+    private sealed class UsuarioVista
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = "";
+        public string Correo { get; set; } = "";
+        public string Rol { get; set; } = "";
+        public bool Activo { get; set; }
+    }
+
+    private sealed class EvaluacionPersistidaVista
+    {
+        public int Id { get; set; }
+        public int ParticipanteId { get; set; }
+        public decimal PctAsistencia { get; set; }
+        public bool Cumple { get; set; }
+    }
+
+    private sealed class SesionVista
+    {
+        public int Id { get; set; }
+        public int PeriodoId { get; set; }
+        public DateOnly Fecha { get; set; }
+        public string? Descripcion { get; set; }
+    }
+
+    private sealed class AsistenciaVista
+    {
+        public int Id { get; set; }
+        public int SesionId { get; set; }
+        public int ParticipanteId { get; set; }
+        public bool Presente { get; set; }
+    }
+
+    private sealed class CriterioVista
+    {
+        public int PeriodoId { get; set; }
+        public int CriterioVersion { get; set; }
+        public decimal MinAsistenciaPct { get; set; }
+        public decimal EntregablesRequeridosPct { get; set; }
+        public int PermanenciaMeses { get; set; }
+        public int DefinidoPor { get; set; }
+        public DateTime? FechaActualizacion { get; set; }
+    }
+
+    private sealed class ResultadoEvaluacionVista
+    {
+        public int EvaluacionId { get; set; }
+        public int Id { get; set; }
+        public decimal PctAsistencia { get; set; }
+        public bool Cumple { get; set; }
     }
 }

@@ -74,4 +74,18 @@ public class ServicioSemillero : IServicioSemillero
 
         return await _repositorioSemillero.ActualizarEstadoAsync(id, activo);
     }
-}   
+
+
+    // Lista los semilleros de un responsable específico.
+    public async Task<List<Semillero>> ListarPorResponsableAsync(int responsableId, int limite)
+    {
+        if (responsableId <= 0)
+            throw new ArgumentException("El identificador del responsable debe ser válido.");
+
+        if (limite <= 0)
+            throw new ArgumentException("El límite debe ser mayor que cero.");
+
+        return await _repositorioSemillero.ObtenerPorResponsableAsync(responsableId, limite);
+    }
+
+}

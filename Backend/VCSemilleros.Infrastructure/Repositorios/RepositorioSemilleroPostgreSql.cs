@@ -35,6 +35,26 @@ public class RepositorioSemilleroPostgreSql : IRepositorioSemillero
         return filas.ToList();
     }
 
+
+    // Lista únicamente los semilleros del docente responsable.
+    public async Task<List<Semillero>> ObtenerPorResponsableAsync(int responsableId, int limite)
+    {
+        const string sql = @"SELECT id, responsable_id AS responsableid, nombre, activo
+                             FROM semillero
+                             WHERE responsable_id = @responsableId
+                             ORDER BY id
+                             LIMIT @limite";
+
+        await using var conexion = new NpgsqlConnection(_cadenaConexion);
+
+        var filas = await conexion.QueryAsync<Semillero>(
+            sql,
+            new { responsableId, limite });
+
+        return filas.ToList();
+    }
+
+
     // E4: busca un semillero por id (null si no existe).
     public async Task<Semillero?> ObtenerPorIdAsync(int id)
     {

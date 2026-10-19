@@ -25,48 +25,50 @@ namespace VCSemilleros.Api.Controllers;
 [Authorize]
 public class ParticipantesController : ControllerBase
 {
-	// Los servicios que necesita. "readonly": se asignan una sola vez, en el constructor.
-	private readonly IServicioAsistencia _servicioAsistencia;
-	private readonly IServicioEvaluacion _servicioEvaluacion;
+    // Los servicios que necesita. "readonly": se asignan una sola vez, en el constructor.
+    private readonly IServicioAsistencia _servicioAsistencia;
+    private readonly IServicioEvaluacion _servicioEvaluacion;
+    private readonly IServicioCriterioPeriodo _servicioCriterioPeriodo;
 
-	// Constructor: ASP.NET Core inyecta aquí las implementaciones registradas en Program.cs.
-	public ParticipantesController(IServicioAsistencia servicioAsistencia, IServicioEvaluacion servicioEvaluacion)
-	{
-		_servicioAsistencia = servicioAsistencia;
-		_servicioEvaluacion = servicioEvaluacion;
-	}
+    // Constructor: ASP.NET Core inyecta aquí las implementaciones registradas en Program.cs.
+    public ParticipantesController(IServicioAsistencia servicioAsistencia, IServicioEvaluacion servicioEvaluacion, IServicioCriterioPeriodo servicioCriterioPeriodo)
+    {
+        _servicioAsistencia = servicioAsistencia;
+        _servicioEvaluacion = servicioEvaluacion;
+        _servicioCriterioPeriodo = servicioCriterioPeriodo;
+    }
 
-	// ------------------------------------------------------------------
-	// E15 · GET /api/participantes/{participanteId}/asistencia — Resumen de asistencia del participante
-	// Porcentaje = presentes ÷ sesiones del periodo × 100, con 2 decimales.
-	// El contrato no limita el rol: basta con haber ingresado.
-	// ------------------------------------------------------------------
-	[HttpGet("{participanteId:int}/asistencia")]
-	public async Task<IActionResult> ObtenerResumen(int participanteId)
-	{
-		try
-		{
-			// 404 si el participante no existe; 400 si su periodo no tiene sesiones (no hay evidencia
-			// que resumir). Ambos los decide el servicio.
-			var resumen = await _servicioAsistencia.ObtenerResumenAsync(participanteId);
+    // ------------------------------------------------------------------
+    // E15 · GET /api/participantes/{participanteId}/asistencia — Resumen de asistencia del participante
+    // Porcentaje = presentes ÷ sesiones del periodo × 100, con 2 decimales.
+    // El contrato no limita el rol: basta con haber ingresado.
+    // ------------------------------------------------------------------
+    [HttpGet("{participanteId:int}/asistencia")]
+    public async Task<IActionResult> ObtenerResumen(int participanteId)
+    {
+        try
+        {
+            // 404 si el participante no existe; 400 si su periodo no tiene sesiones (no hay evidencia
+            // que resumir). Ambos los decide el servicio.
+            var resumen = await _servicioAsistencia.ObtenerResumenAsync(participanteId);
 
-			// ResumenAsistencia ya tiene la forma exacta del contrato:
-			// { participanteId, periodoId, sesiones, presentes, porcentaje }. Se devuelve tal cual.
-			return Ok(resumen);
-		}
-		catch (NoEncontradoExcepcion ex)
-		{
-			return StatusCode(404, new RespuestaError(404, "Recurso no encontrado.", ex.Message));
-		}
-		catch (ArgumentException ex)
-		{
-			return StatusCode(400, new RespuestaError(400, "Parámetros inválidos.", ex.Message));
-		}
-		catch (Exception ex)
-		{
-			return StatusCode(500, new RespuestaError(500, "Error interno.", ex.Message));
-		}
-	}
+            // ResumenAsistencia ya tiene la forma exacta del contrato:
+            // { participanteId, periodoId, sesiones, presentes, porcentaje }. Se devuelve tal cual.
+            return Ok(resumen);
+        }
+        catch (NoEncontradoExcepcion ex)
+        {
+            return StatusCode(404, new RespuestaError(404, "Recurso no encontrado.", ex.Message));
+        }
+        catch (ArgumentException ex)
+        {
+            return StatusCode(400, new RespuestaError(400, "Parámetros inválidos.", ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new RespuestaError(500, "Error interno.", ex.Message));
+        }
+    }
 
     // E17 · POST /api/participantes/{participanteId}/evaluaciones — evaluar contra un criterio.
     // Rol: DOCENTE o COORDINADOR. CAMBIO: si quien llama es COORDINADOR, el "definidoPor" del body debe ser
@@ -77,23 +79,24 @@ public class ParticipantesController : ControllerBase
     [Authorize(Roles = "DOCENTE,COORDINADOR")]
     public async Task<IActionResult> Evaluar(int participanteId, [FromBody] EvaluacionCrear peticion)
     {
-        // IsInRole("COORDINADOR") mira el claim "rol" del token. Si es coordinador y el id del body no es el suyo, 403.
-        if (User.IsInRole("COORDINADOR") && peticion.DefinidoPor != User.ObtenerId())
-        {
-            return StatusCode(403, new RespuestaError(
-                403, "Acceso denegado.", "Un coordinador solo puede definir el criterio a su propio nombre: definidoPor debe ser el id de la persona que inició sesión."));
-        }
-
         try
         {
-            // Si la petición no trae criterioVersion, se usa 1 (contrato E17).
-            var criterioVersion = peticion.CriterioVersion ?? 1;
+            // Si hay configuración persistida para el período, el backend es la fuente de verdad.
+            // Los valores enviados por el navegador no pueden sustituir un criterio guardado.
+            var configurado = await _servicioCriterioPeriodo.ObtenerPorParticipanteAsync(participanteId);
+            if (configurado is null && User.IsInRole("COORDINADOR") &&
+                peticion.DefinidoPor != User.ObtenerId())
+            {
+                return StatusCode(403, new RespuestaError(
+                    403, "Acceso denegado.", "El campo definidoPor debe ser el id de la persona autenticada."));
+            }
+
+            var minAsistenciaPct = configurado?.MinAsistenciaPct ?? peticion.MinAsistenciaPct!.Value;
+            var definidoPor = configurado?.DefinidoPor ?? peticion.DefinidoPor!.Value;
+            var criterioVersion = configurado?.CriterioVersion ?? peticion.CriterioVersion ?? 1;
 
             var evaluacion = await _servicioEvaluacion.EvaluarAsync(
-                participanteId,
-                peticion.MinAsistenciaPct!.Value,
-                peticion.DefinidoPor!.Value,
-                criterioVersion);
+                participanteId, minAsistenciaPct, definidoPor, criterioVersion);
 
             return Ok(new RespuestaEvaluacionCreada(
                 200,

@@ -53,6 +53,14 @@ public class CredencialesController : ControllerBase
                 Errores: new List<string> { "El campo titularId es obligatorio." }));
         }
 
+        // Un estudiante solo puede consultar sus propias credenciales, aunque manipule la URL.
+        if (User.IsInRole("ESTUDIANTE") &&
+            (User.ObtenerId() is not int titularAutenticado || titularId.Value != titularAutenticado))
+        {
+            return StatusCode(403, new RespuestaError(
+                403, "Acceso denegado.", "Solo puede consultar las credenciales de su propia cuenta."));
+        }
+
         try
         {
             // Si limite <= 0, el servicio lanza ArgumentException (400).

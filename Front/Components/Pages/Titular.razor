@@ -1,138 +1,229 @@
 ﻿@page "/Titular"
+@using System.Text.Json
+@using Microsoft.JSInterop
+@inject Front.Servicios.SesionUsuario Sesion
+@inject Front.Servicios.CredencialesService CredencialesService
+@inject Microsoft.AspNetCore.Components.NavigationManager Navigation
+@inject IJSRuntime JS
 
 <PageTitle>Portal del Titular - VC-Semilleros</PageTitle>
 
-<!-- Navegación por pestañas (Tabs) -->
-<div class="border-bottom border-secondary mb-4">
-    <ul class="nav nav-tabs border-0 gap-2">
-        <li class="nav-item">
-            <button class="nav-link @(pestanaActiva == "mis-credenciales" ? "active bg-dark text-white border-primary border-bottom-0 fw-bold" : "text-secondary border-0")" 
-                    @onclick='() => CambiarPestana("mis-credenciales")'>
-                Mis Credenciales
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link @(pestanaActiva == "ver-credencial" ? "active bg-dark text-white border-primary border-bottom-0 fw-bold" : "text-secondary border-0")" 
-                    @onclick='() => CambiarPestana("ver-credencial")'>
-                Ver Credencial
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link @(pestanaActiva == "compartir" ? "active bg-dark text-white border-primary border-bottom-0 fw-bold" : "text-secondary border-0")" 
-                    @onclick='() => CambiarPestana("compartir")'>
-                Compartir
-            </button>
-        </li>
-    </ul>
-</div>
-
-@if (pestanaActiva == "ver-credencial")
+@if (accesoPermitido)
 {
-    <div class="mb-4">
-        <h2 class="fw-bold text-white mb-2">Credencial Digital</h2>
-        <span class="badge bg-success-subtle text-success border border-success rounded-pill px-3 py-1">
-            ● Válida
-        </span>
-    </div>
-
-    <!-- Credencial estilo Card Gradient -->
-    <div class="card border-0 rounded-4 p-4 text-white mb-4 shadow-lg" 
-         style="background: linear-gradient(135deg, #059669 0%, #0284C7 50%, #1D4ED8 100%); max-width: 720px;">
-        <div class="d-flex justify-content-between align-items-start mb-4">
-            <div>
-                <small class="text-white-50 text-uppercase fw-semibold tracking-wider">CREDENCIAL DIGITAL VERIFICABLE</small>
-                <div class="fw-mono small">CRED-2024-0841</div>
-            </div>
-            <div class="bg-white bg-opacity-20 px-3 py-1 rounded-3 fw-bold">
-                VC
-            </div>
+    <div class="container-fluid p-0">
+        <div class="border-bottom border-secondary mb-4">
+            <ul class="nav nav-tabs border-0 gap-2">
+                <li class="nav-item"><button class="nav-link @(pestanaActiva == "mis-credenciales" ? "active bg-dark text-white" : "text-secondary")" @onclick='() => CambiarPestana("mis-credenciales")'>Mis credenciales</button></li>
+                <li class="nav-item"><button class="nav-link @(pestanaActiva == "ver-credencial" ? "active bg-dark text-white" : "text-secondary")" @onclick='() => CambiarPestana("ver-credencial")'>Ver credencial</button></li>
+            </ul>
         </div>
 
-        <h3 class="fw-bold mb-1">Participación en Semillero de Investigación</h3>
-        <p class="text-white-50 mb-4">Certificación de Productos & Ponencias</p>
-
-        <div class="row g-3">
-            <div class="col-6">
-                <small class="text-white-50 text-uppercase fw-semibold d-block">TITULAR</small>
-                <span class="fw-bold fs-5">Ana María Torres Vega</span>
-            </div>
-            <div class="col-6">
-                <small class="text-white-50 text-uppercase fw-semibold d-block">INSTITUCIÓN</small>
-                <span class="fw-bold fs-5">VC-Semilleros</span>
-            </div>
-            <div class="col-12 mt-3">
-                <small class="text-white-50 text-uppercase fw-semibold d-block">FECHA DE EMISIÓN</small>
-                <span class="fw-semibold">15 de Junio, 2024</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sección de Información de Verificación -->
-    <div class="row g-4" style="max-width: 720px;">
-        <div class="col-md-6">
-            <div class="card-custom p-4 h-100">
-                <h5 class="fw-bold text-white mb-3">Información de Verificación</h5>
-                <div class="mb-2">
-                    <small class="text-secondary d-block">Identificador</small>
-                    <span class="text-white fw-mono">CRED-2024-0841</span>
+        @if (!string.IsNullOrWhiteSpace(mensaje))
+        {
+            <div class="alert @(esError ? "alert-danger" : "alert-info")">@mensaje</div>
+        }
+        @if (cargando)
+        {
+            <p class="text-secondary">Consultando tus credenciales…</p>
+        }
+        else if (pestanaActiva == "mis-credenciales")
+        {
+            <h3 class="fw-bold text-white mb-2">Mis credenciales registradas</h3>
+            <p class="text-secondary">Información recuperada de tu cuenta autenticada.</p>
+            @if (credenciales.Count == 0)
+            {
+                <div class="card-custom p-4"><p class="text-secondary mb-0">No hay credenciales emitidas para tu cuenta.</p></div>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var cred in credenciales)
+                    {
+                        <div class="col-12 col-xl-8">
+                            <div class="card-custom p-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                                <div>
+                                    <h5 class="fw-bold text-white mb-1">@cred.Tipo</h5>
+                                    <div class="text-secondary small">Código: @cred.Codigo</div>
+                                    <div class="text-secondary small">Emisión: @cred.FechaEmision.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                                    <span class="badge @(cred.Estado.Equals("VIGENTE", StringComparison.OrdinalIgnoreCase) ? "bg-success" : "bg-secondary")">@cred.Estado</span>
+                                </div>
+                                <button class="btn btn-outline-light btn-sm" @onclick="() => VerCredencialAsync(cred)">Ver detalle</button>
+                            </div>
+                        </div>
+                    }
                 </div>
-                <div class="mb-2">
-                    <small class="text-secondary d-block">Hash Blockchain</small>
-                    <span class="text-white small fw-mono text-break">0x7f8a9b...c3d4e5f</span>
+            }
+        }
+        else
+        {
+            <h2 class="fw-bold text-white mb-2">Detalle de credencial</h2>
+            @if (credencialSeleccionada is null)
+            {
+                <p class="text-secondary">Selecciona una credencial en “Mis credenciales” para consultar su estado y contenido verificable.</p>
+                <button class="btn btn-outline-light" @onclick='() => CambiarPestana("mis-credenciales")'>Volver a mis credenciales</button>
+            }
+            else
+            {
+                <div class="card-custom p-4 mb-3" style="max-width:760px;">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div><h4 class="text-white fw-bold">@credencialSeleccionada.Tipo</h4><div class="text-secondary">Código: @credencialSeleccionada.Codigo</div></div>
+                        <span class="badge @(credencialSeleccionada.Estado.Equals("VIGENTE", StringComparison.OrdinalIgnoreCase) ? "bg-success" : "bg-secondary")">@credencialSeleccionada.Estado</span>
+                    </div>
+                    <div class="mt-3"><small class="text-secondary d-block">Hash de la credencial</small><code class="text-white text-break">@credencialSeleccionada.VcHash</code></div>
+                    <div class="mt-3"><small class="text-secondary d-block">Fecha de emisión</small><span class="text-white">@credencialSeleccionada.FechaEmision.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span></div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button class="btn btn-primary-custom" disabled="@cargando" @onclick="ConsultarVcAsync">Consultar credencial verificable (VC)</button>
+                        <button class="btn btn-outline-success" disabled="@cargando" @onclick="CompartirCredencialAsync">Compartir / copiar credencial</button>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(textoParaCompartir))
+                    {
+                        <div class="mt-3">
+                            <label class="form-label text-secondary">Contenido para compartir</label>
+                            <textarea class="form-control bg-dark text-white border-secondary" rows="5" readonly @bind="textoParaCompartir"></textarea>
+                            <p class="small text-secondary mt-1">Si el navegador no permitió copiar automáticamente, selecciona y copia este contenido para enviarlo a quien deba verificar la credencial.</p>
+                        </div>
+                    }
                 </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card-custom p-4 text-center h-100 d-flex flex-column align-items-center justify-content-center">
-                <div class="bg-white p-2 rounded-3 mb-2">
-                    <!-- Representación simple QR -->
-                    <div class="fs-1 text-dark">🏁</div>
-                </div>
-                <small class="text-secondary">Escanear para validar en red</small>
-            </div>
-        </div>
+                @if (!string.IsNullOrWhiteSpace(vcContenido))
+                {
+                    <div class="card-custom p-4" style="max-width:900px;">
+                        <h5 class="text-white">Contenido VC devuelto por la API</h5>
+                        <pre class="text-white small text-break" style="white-space:pre-wrap;">@vcContenido</pre>
+                    </div>
+                }
+            }
+        }
     </div>
 }
-else if (pestanaActiva == "mis-credenciales")
-{
-    <div class="mb-4">
-        <h3 class="fw-bold text-white mb-2">Mis Credenciales Registradas</h3>
-        <p class="text-secondary">Lista de certificados y reconocimientos en el semillero.</p>
-    </div>
-
-    <div class="row g-3" style="max-width: 720px;">
-        <div class="col-12">
-            <div class="card-custom p-3 d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="fw-bold text-white mb-1">Participación en Semillero de Investigación</h5>
-                    <small class="text-secondary">Emitido el 15/06/2024 • Estado: Válida</small>
-                </div>
-                <button class="btn btn-outline-custom btn-sm" @onclick='() => CambiarPestana("ver-credencial")'>
-                    Ver Detalle
-                </button>
-            </div>
-        </div>
-    </div>
-}
-else if (pestanaActiva == "compartir")
-{
-    <div class="card-custom p-4" style="max-width: 720px;">
-        <h4 class="fw-bold text-white mb-3">Compartir Credencial</h4>
-        <p class="text-secondary mb-3">Copia el enlace de verificación pública para adjuntarlo a tu CV o perfil profesional.</p>
-        <div class="input-group mb-3">
-            <input type="text" class="form-control bg-dark text-white border-secondary" value="https://vc-semilleros.org/verify/CRED-2024-0841" readonly />
-            <button class="btn btn-primary-custom">Copiar Enlace</button>
-        </div>
-    </div>
-}
-
 
 @code {
-    private string pestanaActiva = "ver-credencial";
+    private bool accesoPermitido;
+    private bool cargando;
+    private bool esError;
+    private string mensaje = "";
+    private string pestanaActiva = "mis-credenciales";
+    private string vcContenido = "";
+    private string textoParaCompartir = "";
+    private List<CredencialVista> credenciales = new();
+    private CredencialVista? credencialSeleccionada;
 
-    private void CambiarPestana(string pestana)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        pestanaActiva = pestana;
+        if (!firstRender) return;
+        if (!Sesion.EstaAutenticado) { Navigation.NavigateTo("/login", replace: true); return; }
+        var rol = Sesion.Rol?.Trim().ToUpperInvariant();
+        if (rol != "ESTUDIANTE")
+        {
+            Navigation.NavigateTo(rol switch { "DOCENTE" => "/Docente", "COORDINADOR" => "/Coordinador", "ADMINISTRADOR" => "/Admin", _ => "/login" }, replace: true);
+            return;
+        }
+        accesoPermitido = true;
+        await CargarCredencialesAsync();
+        StateHasChanged();
+    }
+
+    private void CambiarPestana(string pestana) { pestanaActiva = pestana; mensaje = ""; }
+
+    private async Task CargarCredencialesAsync()
+    {
+        if (Sesion.Id is not int titularId) { Mostrar("No se pudo identificar la cuenta autenticada.", true); return; }
+        cargando = true;
+        try
+        {
+            var json = await CredencialesService.ListarAsync<JsonElement>(titularId);
+            credenciales = LeerLista<CredencialVista>(json);
+            Mostrar(credenciales.Count == 0 ? "No hay credenciales asociadas a tu cuenta." : $"{credenciales.Count} credencial(es) cargada(s).", false);
+        }
+        catch (Exception ex) { Mostrar($"No se pudieron consultar tus credenciales: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task VerCredencialAsync(CredencialVista cred)
+    {
+        credencialSeleccionada = cred;
+        vcContenido = "";
+        textoParaCompartir = "";
+        pestanaActiva = "ver-credencial";
+        cargando = true;
+        try
+        {
+            var estado = await CredencialesService.ObtenerEstadoAsync<JsonElement>(cred.Codigo);
+            if (estado is { ValueKind: JsonValueKind.Object } && estado.TryGetProperty("estado", out var valor))
+                cred.Estado = valor.ToString();
+            Mostrar("Detalle y estado consultados desde la API.", false);
+        }
+        catch (Exception ex) { Mostrar($"No se pudo consultar el estado: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task ConsultarVcAsync()
+    {
+        if (credencialSeleccionada is null) return;
+        cargando = true;
+        try
+        {
+            var json = await CredencialesService.ObtenerVcAsync<JsonElement>(credencialSeleccionada.Codigo);
+            vcContenido = json.ValueKind != JsonValueKind.Undefined ? json.GetRawText() : "La API no devolvió contenido.";
+            Mostrar("Credencial verificable recuperada.", false);
+        }
+        catch (Exception ex) { Mostrar($"No se pudo obtener la VC: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task CompartirCredencialAsync()
+    {
+        if (credencialSeleccionada is null) return;
+        cargando = true;
+        textoParaCompartir = "";
+        try
+        {
+            var json = await CredencialesService.ObtenerVcAsync<JsonElement>(credencialSeleccionada.Codigo);
+            var contenido = "";
+            if (json.ValueKind == JsonValueKind.Object && json.TryGetProperty("vc", out var vcValor))
+                contenido = vcValor.ValueKind == JsonValueKind.String ? vcValor.GetString() ?? "" : vcValor.GetRawText();
+            else if (json.ValueKind != JsonValueKind.Undefined)
+                contenido = json.GetRawText();
+            if (string.IsNullOrWhiteSpace(contenido))
+            {
+                Mostrar("La API no devolvió el contenido de la credencial para compartir.", true);
+                return;
+            }
+
+            textoParaCompartir = contenido;
+            try
+            {
+                await JS.InvokeVoidAsync("navigator.clipboard.writeText", contenido);
+                Mostrar("Credencial copiada. Ahora puedes pegarla y enviarla a quien deba verificarla.", false);
+            }
+            catch
+            {
+                Mostrar("No se pudo copiar automáticamente. El contenido está disponible abajo para copiarlo manualmente.", false);
+            }
+        }
+        catch (Exception ex)
+        {
+            Mostrar($"No se pudo preparar la credencial para compartir: {ex.Message}", true);
+        }
+        finally { cargando = false; }
+    }
+
+    private void Mostrar(string texto, bool error) { mensaje = texto; esError = error; }
+    private static readonly JsonSerializerOptions Opciones = new() { PropertyNameCaseInsensitive = true };
+    private static List<T> LeerLista<T>(JsonElement? json)
+    {
+        if (json is null || json.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined) return new();
+        var e = json.Value;
+        if (e.ValueKind == JsonValueKind.Object && e.TryGetProperty("datos", out var datos)) e = datos;
+        return e.ValueKind == JsonValueKind.Array ? JsonSerializer.Deserialize<List<T>>(e.GetRawText(), Opciones) ?? new() : new();
+    }
+
+    private sealed class CredencialVista
+    {
+        public string Codigo { get; set; } = "";
+        public int TitularId { get; set; }
+        public string Tipo { get; set; } = "";
+        public string Estado { get; set; } = "";
+        public string VcHash { get; set; } = "";
+        public DateTime FechaEmision { get; set; }
     }
 }

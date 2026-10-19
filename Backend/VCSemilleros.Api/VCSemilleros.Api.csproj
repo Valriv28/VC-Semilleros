@@ -1,4 +1,4 @@
-<!-- Proyecto de la capa de Interfaz: controladores, peticiones y Program.cs (el ensamblador).
+﻿<!-- Proyecto de la capa de Interfaz: controladores, peticiones y Program.cs (el ensamblador).
      Api conoce todos los demás proyectos, pero solo para ensamblarlos (Art. 4). -->
 <Project Sdk="Microsoft.NET.Sdk.Web">
 	<!-- Sdk="Microsoft.NET.Sdk.Web": el kit de .NET para aplicaciones web (ASP.NET Core).
@@ -16,7 +16,8 @@
 
 		<RootNamespace>VCSemilleros.Api</RootNamespace>
 		<!-- RootNamespace: espacio de nombres base de este proyecto. -->
-	</PropertyGroup>
+	  <UserSecretsId>01211c92-5ae1-4f67-a43f-62011687e072</UserSecretsId>
+  </PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />

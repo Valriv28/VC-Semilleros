@@ -42,7 +42,7 @@ public class SemillerosController : ControllerBase
     // E3 · GET /api/semilleros[?limite=N] — Listar semilleros · Rol: administrador
     // ------------------------------------------------------------------
     [HttpGet("semilleros")]
-    [Authorize(Roles = "ADMINISTRADOR")]
+    [Authorize(Roles = "ADMINISTRADOR,COORDINADOR")]
     // "limite = 1000": si la URL no trae ?limite=, vale 1000 (el valor por defecto del contrato).
     public async Task<IActionResult> Listar([FromQuery] int limite = 1000)
     {
@@ -165,11 +165,21 @@ public class SemillerosController : ControllerBase
     // Rol: docente / administrador
     // ------------------------------------------------------------------
     [HttpGet("semilleros/{semilleroId:int}/periodos")]
-    [Authorize(Roles = "DOCENTE,ADMINISTRADOR")]
+    [Authorize(Roles = "DOCENTE,ADMINISTRADOR,COORDINADOR")]
     public async Task<IActionResult> ListarPeriodos(int semilleroId, [FromQuery] int limite = 1000)
     {
         try
         {
+
+            var semillero = await _servicioSemillero.ObtenerAsync(semilleroId);
+
+            if (User.IsInRole("DOCENTE") &&
+                (User.ObtenerId() is not int docenteId ||
+                 semillero.ResponsableId != docenteId))
+            {
+                return Forbid();
+            }
+
             // Si el semillero no existe → 404; si limite <= 0 → 400 (ambos los decide el servicio).
             var periodos = await _servicioPeriodo.ListarPeriodosAsync(semilleroId, limite);
 
@@ -201,6 +211,15 @@ public class SemillerosController : ControllerBase
     {
         try
         {
+
+            var semillero = await _servicioSemillero.ObtenerAsync(semilleroId);
+
+            if (User.ObtenerId() is not int docenteId ||
+                semillero.ResponsableId != docenteId)
+            {
+                return Forbid();
+            }
+
             // El servicio comprueba: semillero existe (404), está activo (400) y fechaFin >= fechaInicio (400).
             var id = await _servicioPeriodo.CrearPeriodoAsync(
                 semilleroId,
@@ -223,4 +242,43 @@ public class SemillerosController : ControllerBase
             return StatusCode(500, new RespuestaError(500, "Error interno.", ex.Message));
         }
     }
+
+
+    // Lista únicamente los semilleros del docente autenticado.
+    [HttpGet("semilleros/mios")]
+    [Authorize(Roles = "DOCENTE")]
+    public async Task<IActionResult> ListarMios([FromQuery] int limite = 1000)
+    {
+        try
+        {
+            var responsableId = User.ObtenerId();
+
+            if (responsableId is null || responsableId.Value <= 0)
+                return Forbid();
+
+            var semilleros = await _servicioSemillero.ListarPorResponsableAsync(
+                responsableId.Value,
+                limite);
+
+            if (semilleros.Count == 0)
+                return NoContent();
+
+            return Ok(new RespuestaLista<Domain.Modelos.Semillero>(
+                "semillero",
+                limite,
+                semilleros.Count,
+                semilleros));
+        }
+        catch (ArgumentException ex)
+        {
+            return StatusCode(400,
+                new RespuestaError(400, "Parámetros inválidos.", ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500,
+                new RespuestaError(500, "Error interno.", ex.Message));
+        }
+    }
+
 }

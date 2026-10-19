@@ -1,31 +1,31 @@
-using VCSemilleros.Domain.Modelos;              // Los modelos del dominio.
+﻿using VCSemilleros.Domain.Modelos;              // Los modelos del dominio.
 using VCSemilleros.Domain.Repositorios;         // Los puertos que estas clases falsas implementan.
 
 namespace VCSemilleros.Tests.Pruebas.Application;
 
-// REPOSITORIOS FALSOS (también llamados "dobles de prueba"): implementan los mismos puertos que
+// REPOSITORIOS FALSOS (tambiÃ©n llamados "dobles de prueba"): implementan los mismos puertos que
 // los repositorios PostgreSQL, pero guardan los datos en LISTAS EN MEMORIA.
 // Gracias a la arquitectura hexagonal, los servicios no notan la diferencia: reciben una
-// IRepositorio… y funciona igual. Así las pruebas corren sin PostgreSQL ni red (criterio 12).
-// Las listas son públicas para que cada prueba pueda sembrar los datos que necesita.
+// IRepositorioâ€¦ y funciona igual. AsÃ­ las pruebas corren sin PostgreSQL ni red (criterio 12).
+// Las listas son pÃºblicas para que cada prueba pueda sembrar los datos que necesita.
 // Los falsos de credencial, anclaje y el cliente de Stellar llegan en la Fase 5.
 
 // Datos que las pruebas comparten. "internal static": solo se ve dentro del proyecto de pruebas.
 internal static class DatosDePrueba
 {
     // Valor cualquiera para la columna contrasena_hash de los usuarios sembrados.
-    // NUNCA se verifica como contraseña real (salvo en ServicioAutenticacionPruebas, que genera el suyo),
-    // así que basta con un texto fijo. "const" = valor fijo que nunca cambia.
+    // NUNCA se verifica como contraseÃ±a real (salvo en ServicioAutenticacionPruebas, que genera el suyo),
+    // asÃ­ que basta con un texto fijo. "const" = valor fijo que nunca cambia.
     public const string HashContrasena = "hash-de-prueba";
 }
 
-// Clase estática auxiliar: calcula el siguiente id, imitando al SERIAL de PostgreSQL.
+// Clase estÃ¡tica auxiliar: calcula el siguiente id, imitando al SERIAL de PostgreSQL.
 internal static class Ids
 {
-    // "IEnumerable<int>" es cualquier colección de enteros; si está vacía, el primer id es 1.
+    // "IEnumerable<int>" es cualquier colecciÃ³n de enteros; si estÃ¡ vacÃ­a, el primer id es 1.
     public static int Siguiente(IEnumerable<int> idsExistentes)
     {
-        // Any() dice si la colección tiene al menos un elemento; Max() devuelve el mayor.
+        // Any() dice si la colecciÃ³n tiene al menos un elemento; Max() devuelve el mayor.
         return idsExistentes.Any() ? idsExistentes.Max() + 1 : 1;
     }
 }
@@ -33,22 +33,37 @@ internal static class Ids
 // ---------- Usuario ----------
 public class RepositorioUsuarioFalso : IRepositorioUsuario
 {
-    // Lista pública: la prueba agrega aquí los usuarios que necesite.
+    // Lista pÃºblica: la prueba agrega aquÃ­ los usuarios que necesite.
     public List<Usuario> Usuarios { get; } = new();
 
     // Task.FromResult(x) devuelve un Task ya terminado con el valor x (no hay nada que esperar).
-    // FirstOrDefault devuelve el primer usuario que cumple la condición, o null si no hay ninguno.
+    // FirstOrDefault devuelve el primer usuario que cumple la condiciÃ³n, o null si no hay ninguno.
     public Task<Usuario?> ObtenerPorIdAsync(int id)
         => Task.FromResult(Usuarios.FirstOrDefault(u => u.Id == id));
 
-    // NUEVO: busca por correo sin distinguir mayúsculas, como el lower(...) del SQL real.
+    // NUEVO: busca por correo sin distinguir mayÃºsculas, como el lower(...) del SQL real.
     public Task<Usuario?> ObtenerPorCorreoAsync(string correo)
         => Task.FromResult(Usuarios.FirstOrDefault(u =>
                string.Equals(u.Correo, correo, StringComparison.OrdinalIgnoreCase)));
-}
+
+    public Task<int> CrearAsync(Usuario usuario)
+    {
+        if (Usuarios.Any(u =>
+            string.Equals(u.Correo, usuario.Correo, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException("El correo ya estÃ¡ registrado.");
+        }
+
+        usuario.Id = Ids.Siguiente(Usuarios.Select(u => u.Id));
+        Usuarios.Add(usuario);
+
+        return Task.FromResult(usuario.Id);
+    }
+
 
 // ---------- Administrador ----------
 // NUEVO: imita IRepositorioAdministrador para probar el ingreso del administrador.
+}
 public class RepositorioAdministradorFalso : IRepositorioAdministrador
 {
     public List<Administrador> Administradores { get; } = new();
@@ -58,32 +73,54 @@ public class RepositorioAdministradorFalso : IRepositorioAdministrador
                string.Equals(a.Correo, correo, StringComparison.OrdinalIgnoreCase)));
 }
 
+
 // ---------- Semillero ----------
 public class RepositorioSemilleroFalso : IRepositorioSemillero
 {
     public List<Semillero> Semilleros { get; } = new();
 
-    // Take(limite) se queda con las primeras "limite" filas, como el LIMIT del SQL.
+    // Devuelve los semilleros ordenados por id.
     public Task<List<Semillero>> ObtenerTodosAsync(int limite)
-        => Task.FromResult(Semilleros.OrderBy(s => s.Id).Take(limite).ToList());
+        => Task.FromResult(
+            Semilleros
+                .OrderBy(s => s.Id)
+                .Take(limite)
+                .ToList());
+
+    // Devuelve únicamente los semilleros del responsable indicado.
+    public Task<List<Semillero>> ObtenerPorResponsableAsync(
+        int responsableId,
+        int limite)
+        => Task.FromResult(
+            Semilleros
+                .Where(s => s.ResponsableId == responsableId)
+                .OrderBy(s => s.Id)
+                .Take(limite)
+                .ToList());
 
     public Task<Semillero?> ObtenerPorIdAsync(int id)
-        => Task.FromResult(Semilleros.FirstOrDefault(s => s.Id == id));
+        => Task.FromResult(
+            Semilleros.FirstOrDefault(s => s.Id == id));
 
     public Task<int> CrearAsync(Semillero semillero)
     {
         semillero.Id = Ids.Siguiente(Semilleros.Select(s => s.Id));
-        semillero.Activo = true;                 // La BD aplica DEFAULT TRUE.
+        semillero.Activo = true;
         Semilleros.Add(semillero);
+
         return Task.FromResult(semillero.Id);
     }
 
-    // Devuelve las filas afectadas: 1 si encontró el semillero, 0 si no existe.
+    // Devuelve 1 si encontró el semillero y 0 si no existe.
     public Task<int> ActualizarEstadoAsync(int id, bool activo)
     {
         var semillero = Semilleros.FirstOrDefault(s => s.Id == id);
-        if (semillero is null) return Task.FromResult(0);
+
+        if (semillero is null)
+            return Task.FromResult(0);
+
         semillero.Activo = activo;
+
         return Task.FromResult(1);
     }
 }
@@ -122,8 +159,8 @@ public class RepositorioParticipanteFalso : IRepositorioParticipante
 
     public Task<int> CrearAsync(Participante participante)
     {
-        // Imita el UNIQUE (periodo_id, estudiante_id) de la BD: si ya existe, lanza una excepción
-        // (en la BD real sería un error del motor que la API responde como 500).
+        // Imita el UNIQUE (periodo_id, estudiante_id) de la BD: si ya existe, lanza una excepciÃ³n
+        // (en la BD real serÃ­a un error del motor que la API responde como 500).
         if (Participantes.Any(p => p.PeriodoId == participante.PeriodoId
                                 && p.EstudianteId == participante.EstudianteId))
             throw new InvalidOperationException("duplicate key value violates unique constraint (participante)");
@@ -146,7 +183,7 @@ public class RepositorioSesionFalso : IRepositorioSesion
         => Task.FromResult(Sesiones.Where(s => s.PeriodoId == periodoId)
                                    .OrderBy(s => s.Fecha).ThenBy(s => s.Id).Take(limite).ToList());
 
-    // Count(condición) cuenta los elementos que cumplen la condición (como count(*) con WHERE).
+    // Count(condiciÃ³n) cuenta los elementos que cumplen la condiciÃ³n (como count(*) con WHERE).
     public Task<int> ContarPorPeriodoAsync(int periodoId)
         => Task.FromResult(Sesiones.Count(s => s.PeriodoId == periodoId));
 
@@ -167,8 +204,8 @@ public class RepositorioAsistenciaFalso : IRepositorioAsistencia
         => Task.FromResult(Asistencias.Where(a => a.SesionId == sesionId)
                                       .OrderBy(a => a.Id).Take(limite).ToList());
 
-    // Imita la TRANSACCIÓN del repositorio real: primero comprueba TODAS las filas contra el
-    // UNIQUE (sesion_id, participante_id); si alguna repite, lanza la excepción SIN guardar ninguna.
+    // Imita la TRANSACCIÃ“N del repositorio real: primero comprueba TODAS las filas contra el
+    // UNIQUE (sesion_id, participante_id); si alguna repite, lanza la excepciÃ³n SIN guardar ninguna.
     public Task<int> CrearVariasAsync(List<Asistencia> asistencias)
     {
         foreach (var nueva in asistencias)
@@ -193,7 +230,7 @@ public class RepositorioAsistenciaFalso : IRepositorioAsistencia
 // ---------- Evaluacion ----------
 public class RepositorioEvaluacionFalso : IRepositorioEvaluacion
 {
-    // La evaluación no guarda el periodo: se llega a él por el participante (como el JOIN del SQL real).
+    // La evaluaciÃ³n no guarda el periodo: se llega a Ã©l por el participante (como el JOIN del SQL real).
     // Por eso este falso recibe el falso de participantes por constructor.
     private readonly RepositorioParticipanteFalso _participantes;
 
@@ -218,7 +255,7 @@ public class RepositorioEvaluacionFalso : IRepositorioEvaluacion
                                            .OrderBy(e => e.Id).Take(limite).ToList());
     }
 
-    // La evaluación de MAYOR criterio_version; si empatan, la de mayor id (igual que el SQL real).
+    // La evaluaciÃ³n de MAYOR criterio_version; si empatan, la de mayor id (igual que el SQL real).
     public Task<Evaluacion?> ObtenerCriterioVigenteAsync(int periodoId)
     {
         var ids = IdsParticipantesDelPeriodo(periodoId);
@@ -249,3 +286,5 @@ public class RepositorioEvaluacionFalso : IRepositorioEvaluacion
         return Task.FromResult(1);
     }
 }
+
+

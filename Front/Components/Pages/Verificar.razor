@@ -1,0 +1,85 @@
+﻿@page "/verify/{Uid}"
+@inject IAnclajeEvidencia Anclaje
+
+<PageTitle>Verificar credencial - VC-Semilleros</PageTitle>
+
+<div class="mx-auto" style="max-width: 720px;">
+    <h2 class="fw-bold text-white mb-3">Verificación de credencial</h2>
+
+    @if (cargando)
+    {
+        <p class="text-secondary">Consultando la red Stellar…</p>
+    }
+    else if (sinConexion)
+    {
+        <div class="card-custom p-4">
+            <span class="badge bg-warning text-dark">Sin conexión</span>
+            <p class="text-secondary mt-2 mb-0">No se pudo consultar la red en este momento. Intenta de nuevo en unos minutos.</p>
+        </div>
+    }
+    else if (ev is not null)
+    {
+        <div class="card-custom p-4">
+            <span class="badge @claseBadge px-3 py-2">@titulo</span>
+            <p class="text-secondary mt-3">@detalle</p>
+
+            @if (ev.Estado is EstadoEvidencia.Vigente or EstadoEvidencia.Revocada)
+            {
+                <div class="mb-2">
+                    <small class="text-secondary d-block">Referencia</small>
+                    <span class="text-white fw-mono">@ev.Referencia</span>
+                </div>
+                <div class="mb-2">
+                    <small class="text-secondary d-block">Huella SHA-256 anclada</small>
+                    <span class="text-white small fw-mono text-break">@ev.Sha256Hex</span>
+                </div>
+                <div class="mb-2">
+                    <small class="text-secondary d-block">Registrada en la red</small>
+                    <span class="text-white">@ev.RegistradaEn?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            }
+
+            <div class="mt-3">
+                <small class="text-secondary d-block">Identificador en Attest</small>
+                <span class="text-white small fw-mono text-break">@Uid</span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Uid { get; set; } = "";
+
+    private EvidenciaAnclada? ev;
+    private bool cargando = true;
+    private bool sinConexion;
+    private string titulo = "", claseBadge = "", detalle = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true; sinConexion = false; ev = null;
+        try
+        {
+            ev = await Anclaje.ConsultarAsync(Uid);
+        }
+        catch (AnclajeNoDisponibleException) { sinConexion = true; }
+        catch (AnclajeRechazadoException)     { ev = EvidenciaAnclada.SinRegistro; }   // UID mal formado
+
+        if (ev is not null) (titulo, claseBadge, detalle) = Describir(ev);
+        cargando = false;
+    }
+
+    private static (string, string, string) Describir(EvidenciaAnclada e) => e switch
+    {
+        { Estado: EstadoEvidencia.NoEncontrada } =>
+            ("No encontrada", "bg-secondary", "No hay ninguna evidencia con ese identificador en la red."),
+        { Estado: EstadoEvidencia.Expirada } =>
+            ("Expirada", "bg-warning text-dark", "La vigencia de esta credencial terminó."),
+        { EmitidaPorLaPlataforma: not true } =>
+            ("No emitida por VC-Semilleros", "bg-danger", "Existe en la red, pero no la firmó la cuenta oficial de la plataforma."),
+        { Estado: EstadoEvidencia.Revocada } =>
+            ("Revocada", "bg-danger", "El emisor invalidó esta credencial."),
+        _ =>
+            ("Registrada y vigente", "bg-success", "Firmada por VC-Semilleros y registrada en la red Stellar."),
+    };
+}

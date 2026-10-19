@@ -31,16 +31,19 @@ public class PeriodosController : ControllerBase
     private readonly IServicioPeriodo _servicioPeriodo;
     private readonly IServicioAsistencia _servicioAsistencia;
     private readonly IServicioEvaluacion _servicioEvaluacion;
+    private readonly IServicioCriterioPeriodo _servicioCriterioPeriodo;
 
     // Constructor: ASP.NET Core inyecta aquí las implementaciones registradas en Program.cs.
     public PeriodosController(
         IServicioPeriodo servicioPeriodo,
         IServicioAsistencia servicioAsistencia,
-        IServicioEvaluacion servicioEvaluacion)
+        IServicioEvaluacion servicioEvaluacion,
+        IServicioCriterioPeriodo servicioCriterioPeriodo)
     {
         _servicioPeriodo = servicioPeriodo;
         _servicioAsistencia = servicioAsistencia;
         _servicioEvaluacion = servicioEvaluacion;
+        _servicioCriterioPeriodo = servicioCriterioPeriodo;
     }
 
     // ------------------------------------------------------------------
@@ -165,19 +168,59 @@ public class PeriodosController : ControllerBase
     // El criterio vigente es el de MAYOR versión entre las evaluaciones del periodo.
     // ------------------------------------------------------------------
     [HttpGet("periodos/{periodoId:int}/criterio-vigente")]
+    [Authorize(Roles = "DOCENTE,COORDINADOR,ADMINISTRADOR")]
     public async Task<IActionResult> ObtenerCriterioVigente(int periodoId)
     {
         try
         {
-            // 404 si el periodo no existe o todavía no tiene evaluaciones (lo decide el servicio).
-            var criterio = await _servicioEvaluacion.ObtenerCriterioVigenteAsync(periodoId);
+            // La configuración persistida es la fuente principal, incluso antes de la primera evaluación.
+            var configurado = await _servicioCriterioPeriodo.ObtenerAsync(periodoId);
+            if (configurado is not null)
+            {
+                return Ok(new RespuestaCriterioPeriodo(
+                    configurado.PeriodoId, configurado.CriterioVersion,
+                    configurado.MinAsistenciaPct, configurado.EntregablesRequeridosPct,
+                    configurado.PermanenciaMeses, configurado.DefinidoPor,
+                    configurado.FechaActualizacion));
+            }
 
-            // Del modelo Evaluacion solo se publican los cuatro campos del criterio (contrato E16).
+            // Compatibilidad con períodos históricos que solo tengan evaluaciones guardadas.
+            var historico = await _servicioEvaluacion.ObtenerCriterioVigenteAsync(periodoId);
             return Ok(new RespuestaCriterioVigente(
-                periodoId,
-                criterio.CriterioVersion,
-                criterio.MinAsistenciaPct,
-                criterio.DefinidoPor));
+                periodoId, historico.CriterioVersion, historico.MinAsistenciaPct, historico.DefinidoPor));
+        }
+        catch (NoEncontradoExcepcion ex)
+        {
+            return StatusCode(404, new RespuestaError(404, "Recurso no encontrado.", ex.Message));
+        }
+        catch (ArgumentException ex)
+        {
+            return StatusCode(400, new RespuestaError(400, "Parámetros inválidos.", ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new RespuestaError(500, "Error interno.", ex.Message));
+        }
+    }
+
+    // PUT /api/periodos/{periodoId}/criterio-vigente — configurar criterios (solo coordinador).
+    [HttpPut("periodos/{periodoId:int}/criterio-vigente")]
+    [Authorize(Roles = "COORDINADOR")]
+    public async Task<IActionResult> GuardarCriterio(int periodoId, [FromBody] CriterioPeriodoGuardar peticion)
+    {
+        if (User.ObtenerId() is not int coordinadorId)
+            return StatusCode(403, new RespuestaError(403, "Acceso denegado.", "El token no contiene un identificador válido."));
+
+        try
+        {
+            var criterio = await _servicioCriterioPeriodo.GuardarAsync(
+                periodoId, coordinadorId, peticion.MinAsistenciaPct,
+                peticion.EntregablesRequeridosPct, peticion.PermanenciaMeses);
+
+            return Ok(new RespuestaCriterioPeriodo(
+                criterio.PeriodoId, criterio.CriterioVersion, criterio.MinAsistenciaPct,
+                criterio.EntregablesRequeridosPct, criterio.PermanenciaMeses,
+                criterio.DefinidoPor, criterio.FechaActualizacion));
         }
         catch (NoEncontradoExcepcion ex)
         {

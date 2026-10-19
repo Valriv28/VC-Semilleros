@@ -1,4 +1,4 @@
-// Importa Claim y ClaimsIdentity: un "claim" es un dato que el token afirma sobre la persona (su id, su rol...).
+﻿// Importa Claim y ClaimsIdentity: un "claim" es un dato que el token afirma sobre la persona (su id, su rol...).
 using System.Security.Claims;
 // Importa Encoding: convierte la clave de texto en bytes para firmar el token.
 using System.Text;
@@ -49,6 +49,52 @@ public class AutenticacionController : ControllerBase
         _servicioAutenticacion = servicioAutenticacion;
         _configuracion = configuracion;
     }
+
+
+    // ------------------------------------------------------------------
+    // POST /api/autenticacion/registrar — Crear cuenta de estudiante
+    // ------------------------------------------------------------------
+    [HttpPost("registrar")]
+    public async Task<IActionResult> Registrar(
+        [FromBody] AutenticacionRegistrar peticion)
+    {
+        try
+        {
+            var identidad = await _servicioAutenticacion.RegistrarAsync(
+                peticion.Nombre!,
+                peticion.Correo!,
+                peticion.Contrasena!);
+
+            return StatusCode(
+                StatusCodes.Status201Created,
+                new
+                {
+                    mensaje = "Cuenta registrada correctamente. Ya puedes iniciar sesión.",
+                    id = identidad.Id,
+                    nombre = identidad.Nombre,
+                    correo = identidad.Correo,
+                    rol = identidad.Rol
+                });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(
+                new RespuestaError(400, "Parámetros inválidos.", ex.Message));
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(
+                $"ERROR AL REGISTRAR CUENTA: {ex}");
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new RespuestaError(
+                    500,
+                    "Error interno.",
+                    "No fue posible registrar la cuenta."));
+        }
+    }
+
 
     // ------------------------------------------------------------------
     // E2 · POST /api/autenticacion/ingresar — Identificar al usuario · Rol: público

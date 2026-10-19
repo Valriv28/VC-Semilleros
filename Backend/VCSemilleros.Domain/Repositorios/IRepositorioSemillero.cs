@@ -11,9 +11,14 @@ public interface IRepositorioSemillero
 	// "List<Semillero>" es una lista de objetos Semillero; si no hay filas, devuelve una lista vacía.
 	Task<List<Semillero>> ObtenerTodosAsync(int limite);
 
-	// Busca un semillero por id (E4 y comprobaciones de otros servicios).
-	// Devuelve null si no existe; el servicio lo traduce a 404.
-	Task<Semillero?> ObtenerPorIdAsync(int id);
+
+
+    // Lista únicamente los semilleros de un responsable.
+    Task<List<Semillero>> ObtenerPorResponsableAsync(int responsableId, int limite);
+
+    // Busca un semillero por id (E4 y comprobaciones de otros servicios).
+    // Devuelve null si no existe; el servicio lo traduce a 404.
+    Task<Semillero?> ObtenerPorIdAsync(int id);
 
 	// Inserta un semillero nuevo (E5) y devuelve el id que generó PostgreSQL (INSERT ... RETURNING id).
 	Task<int> CrearAsync(Semillero semillero);

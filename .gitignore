@@ -27,3 +27,14 @@ Thumbs.db
 ## --- Archivos de configuración local / secretos ---
 appsettings.Local.json
 appsettings.Development.json
+
+## --- Respaldos y archivos temporales ---
+*.bak
+*.old
+*.tmp
+backup_roles_*/
+
+## --- Variables de entorno y secretos locales ---
+.env
+.env.*
+!.env.example

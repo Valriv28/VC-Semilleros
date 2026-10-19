@@ -41,6 +41,16 @@ public record RespuestaEvaluacionCreada(int Estado, string Mensaje, int Id, deci
 // Respuesta de E16 (criterio vigente de un periodo, propuesta P1): el criterio de MAYOR versión.
 public record RespuestaCriterioVigente(int PeriodoId, int CriterioVersion, decimal MinAsistenciaPct, int DefinidoPor);
 
+// Configuración persistida del período; incluye los tres criterios definidos por el coordinador.
+public record RespuestaCriterioPeriodo(
+    int PeriodoId,
+    int CriterioVersion,
+    decimal MinAsistenciaPct,
+    decimal EntregablesRequeridosPct,
+    int PermanenciaMeses,
+    int DefinidoPor,
+    DateTime FechaActualizacion);
+
 // Respuesta de E20 (emitir la credencial).
 //   EstadoCredencial: VIGENTE al emitir.
 //   EstadoAnclaje:    ANCLADO o FALLIDO (P4: si Stellar falla, la credencial queda emitida igual).
@@ -84,4 +94,4 @@ public record RespuestaError(
     int Estado,
     string Mensaje,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Detalle = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] List<string>? Errores = null);  
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] List<string>? Errores = null);

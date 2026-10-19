@@ -1,249 +1,398 @@
 ﻿@page "/Admin"
+@using System.Text.Json
+@inject Front.Servicios.SesionUsuario Sesion
+@inject Microsoft.AspNetCore.Components.NavigationManager Navigation
+@inject Front.Servicios.SemillerosService SemillerosService
+@inject Front.Servicios.VerificacionesService VerificacionesService
+@inject Front.Servicios.AdministracionService Administracion
 
-<PageTitle>Portal Administrativo - VC-Semilleros</PageTitle>
+<PageTitle>Administración - VC-Semilleros</PageTitle>
 
-<div class="container-fluid p-0">
-    <div class="row g-0" style="min-height: 80vh;">
-        <!-- Sidebar Navigation Lateral -->
-        <div class="col-md-3 col-lg-2 bg-dark border-end border-secondary p-3">
-            <div class="mb-4 text-white fw-bold fs-6">
-                <span class="text-primary me-2">⚙️</span> Panel de Control
-            </div>
-            
-            <div class="nav flex-column nav-pills gap-1">
-                <button class="nav-link text-start text-white @(seccionActiva == "dashboard" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("dashboard")'>
-                    📊 Dashboard
-                </button>
-                <button class="nav-link text-start text-white @(seccionActiva == "credenciales" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("credenciales")'>
-                    📜 Credenciales
-                </button>
-                <button class="nav-link text-start text-white @(seccionActiva == "firmas" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("firmas")'>
-                    ✍️ Comprobar Firmas
-                </button>
-                <button class="nav-link text-start text-white @(seccionActiva == "usuarios" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("usuarios")'>
-                    👥 Usuarios y Roles
-                </button>
-                <button class="nav-link text-start text-white @(seccionActiva == "configuracion" ? "active bg-primary" : "")" 
-                        @onclick='() => CambiarSeccion("configuracion")'>
-                    ⚙️ Configuración
-                </button>
-            </div>
-        </div>
-
-        <!-- Área Principal de Contenido -->
-        <div class="col-md-9 col-lg-10 p-4">
-            @if (seccionActiva == "dashboard")
-            {
-                <!-- Encabezado -->
-                <div class="mb-4">
-                    <h2 class="fw-bold text-white mb-1">Dashboard</h2>
-                    <p class="text-secondary small">Resumen general del sistema de credenciales</p>
+@if (accesoPermitido)
+{
+    <div class="container-fluid p-0">
+        <div class="row g-0" style="min-height:80vh;">
+            <aside class="col-md-3 col-lg-2 bg-dark border-end border-secondary p-3">
+                <div class="mb-4 text-white fw-bold">🛠️ Administración</div>
+                <div class="nav flex-column nav-pills gap-1">
+                    <button class="nav-link text-start text-white @(seccionActiva == "semilleros" ? "active bg-primary" : "")" @onclick='() => CambiarSeccionAsync("semilleros")'>Gestión de semilleros</button>
+                    <button class="nav-link text-start text-white @(seccionActiva == "verificar" ? "active bg-primary" : "")" @onclick='() => CambiarSeccionAsync("verificar")'>Verificar credencial</button>
+                    <button class="nav-link text-start text-white @(seccionActiva == "roles" ? "active bg-primary" : "")" @onclick='() => CambiarSeccionAsync("roles")'>Gestionar roles</button>
+                    <button class="nav-link text-start text-white @(seccionActiva == "permisos" ? "active bg-primary" : "")" @onclick='() => CambiarSeccionAsync("permisos")'>Gestionar permisos</button>
+                    <button class="nav-link text-start text-white @(seccionActiva == "parametros" ? "active bg-primary" : "")" @onclick='() => CambiarSeccionAsync("parametros")'>Parámetros de acceso</button>
                 </div>
+            </aside>
+            <main class="col-md-9 col-lg-10 p-4">
+                @if (!string.IsNullOrWhiteSpace(mensaje))
+                {
+                    <div class="alert @(esError ? "alert-danger" : "alert-info")" role="alert">@mensaje</div>
+                }
 
-                <!-- Tarjetas de Métricas -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4 col-lg-2">
-                        <div class="card-custom p-3 text-center">
-                            <small class="text-secondary d-block">Emitidas</small>
-                            <h3 class="fw-bold text-success mt-1 mb-0">487</h3>
+                @if (seccionActiva == "semilleros")
+                {
+                    <section class="card-custom p-4 mb-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <div><h4 class="text-white fw-bold mb-1">Semilleros registrados</h4><p class="text-secondary small mb-0">Los datos se consultan desde PostgreSQL mediante la API.</p></div>
+                            <button class="btn btn-outline-light" disabled="@cargando" @onclick="CargarSemillerosAsync">Actualizar</button>
                         </div>
-                    </div>
-                    <div class="col-md-4 col-lg-2">
-                        <div class="card-custom p-3 text-center">
-                            <small class="text-secondary d-block">Pend. Firma</small>
-                            <h3 class="fw-bold text-warning mt-1 mb-0">12</h3>
-                        </div>
-                    </div>
-                    <div class="col-md-4 col-lg-2">
-                        <div class="card-custom p-3 text-center">
-                            <small class="text-secondary d-block">Firmadas</small>
-                            <h3 class="fw-bold text-primary mt-1 mb-0">34</h3>
-                        </div>
-                    </div>
-                    <div class="col-md-4 col-lg-2">
-                        <div class="card-custom p-3 text-center">
-                            <small class="text-secondary d-block">Suspendidas</small>
-                            <h3 class="fw-bold text-warning mt-1 mb-0">8</h3>
-                        </div>
-                    </div>
-                    <div class="col-md-4 col-lg-2">
-                        <div class="card-custom p-3 text-center">
-                            <small class="text-secondary d-block">Revocadas</small>
-                            <h3 class="fw-bold text-danger mt-1 mb-0">3</h3>
-                        </div>
-                    </div>
-                    <div class="col-md-4 col-lg-2">
-                        <div class="card-custom p-3 text-center">
-                            <small class="text-secondary d-block">Solicitudes</small>
-                            <h3 class="fw-bold text-info mt-1 mb-0">15</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tablas de Últimas Credenciales y Alertas -->
-                <div class="row g-4">
-                    <div class="col-lg-8">
-                        <div class="card-custom p-4">
-                            <h5 class="fw-bold text-white mb-3">Últimas credenciales</h5>
-                            <div class="table-responsive">
-                                <table class="table table-dark table-hover mb-0 align-middle">
-                                    <thead>
-                                        <tr class="text-secondary small">
-                                            <th>ID</th>
-                                            <th>NOMBRE</th>
-                                            <th>ESTADO</th>
-                                            <th>FECHA</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td class="fw-mono text-secondary">CRED-2024-0841</td>
-                                            <td class="fw-bold">Certificado de semillero</td>
-                                            <td><span class="badge bg-success-subtle text-success border border-success rounded-pill">● Válida</span></td>
-                                            <td class="text-secondary">2024-06-15</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-mono text-secondary">CRED-2024-0842</td>
-                                            <td class="fw-bold">Certificado de Especialización</td>
-                                            <td><span class="badge bg-success-subtle text-success border border-success rounded-pill">● Válida</span></td>
-                                            <td class="text-secondary">2024-08-20</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                        @if (cargando) { <p class="text-secondary">Cargando…</p> }
+                        else if (semilleros.Count == 0) { <p class="text-secondary">No hay semilleros registrados.</p> }
+                        else
+                        {
+                            <div class="table-responsive"><table class="table table-dark table-hover align-middle">
+                                <thead><tr><th>ID</th><th>Nombre</th><th>Docente responsable</th><th>Estado</th><th>Acción</th></tr></thead>
+                                <tbody>
+                                    @foreach (var s in semilleros)
+                                    {
+                                        <tr><td>@s.Id</td><td>@s.Nombre</td><td>@NombreDocente(s.ResponsableId)</td><td><span class="badge @(s.Activo ? "bg-success" : "bg-secondary")">@(s.Activo ? "Activo" : "Inactivo")</span></td><td><button class="btn btn-sm btn-outline-light" disabled="@cargando" @onclick="() => CambiarEstadoAsync(s)">@((s.Activo) ? "Inactivar" : "Activar")</button></td></tr>
+                                    }
+                                </tbody>
+                            </table></div>
+                        }
+                    </section>
+                    <section class="card-custom p-4" style="max-width:800px;">
+                        <h4 class="text-white fw-bold">Registrar semillero</h4>
+                        <div class="row g-3">
+                            <div class="col-md-7"><label class="form-label text-secondary">Nombre</label><input class="form-control bg-dark text-white border-secondary" maxlength="120" @bind="nuevoNombre" /></div>
+                            <div class="col-md-5">
+                                <label class="form-label text-secondary">Docente responsable</label>
+                                <select class="form-select bg-dark text-white border-secondary" @bind="responsableId" disabled="@cargando">
+                                    <option value="0">Selecciona un docente</option>
+                                    @foreach (var d in docentes)
+                                    {
+                                        <option value="@d.Id">@d.Nombre — @d.Correo</option>
+                                    }
+                                </select>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="col-lg-4">
-                        <div class="card-custom p-4">
-                            <h5 class="fw-bold text-white mb-3">Alertas y notificaciones</h5>
-                            <div class="alert alert-warning bg-warning bg-opacity-10 border-warning text-warning small mb-3">
-                                ⚠️ 12 credenciales pendientes de firma por docente.
-                            </div>
-                            <div class="alert alert-info bg-info bg-opacity-10 border-info text-info small mb-0">
-                                ℹ️ 3 certificados por vencer en los próximos 30 días.
-                            </div>
+                        <button class="btn btn-primary-custom mt-3" disabled="@(cargando || responsableId <= 0)" @onclick="CrearSemilleroAsync">Crear semillero</button>
+                    </section>
+                }
+                else if (seccionActiva == "verificar")
+                {
+                    <section class="card-custom p-4" style="max-width:900px;">
+                        <h4 class="text-white fw-bold">Verificar credencial firmada</h4>
+                        <p class="text-secondary">Pega la VC completa obtenida desde el detalle de una credencial.</p>
+                        <textarea class="form-control bg-dark text-white border-secondary" rows="8" @bind="vc"></textarea>
+                        <button class="btn btn-primary-custom mt-3" disabled="@(cargando || string.IsNullOrWhiteSpace(vc))" @onclick="VerificarAsync">Verificar</button>
+                        @if (!string.IsNullOrWhiteSpace(resultadoVerificacion))
+                        {
+                            <h5 class="text-white mt-4">Resultado de la API</h5>
+                            <pre class="text-white small text-break" style="white-space:pre-wrap;">@resultadoVerificacion</pre>
+                        }
+                    </section>
+                }
+                else if (seccionActiva == "roles")
+                {
+                    <section class="card-custom p-4">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                            <div><h4 class="text-white fw-bold mb-1">Gestionar roles</h4><p class="text-secondary small mb-0">Cambia el rol de usuarios ya registrados.</p></div>
+                            <button class="btn btn-outline-light" disabled="@cargando" @onclick="CargarUsuariosAsync">Actualizar</button>
                         </div>
-                    </div>
-                </div>
-            }
-            else if (seccionActiva == "credenciales")
-            {
-                <div class="card-custom p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="fw-bold text-white m-0">Gestión de Credenciales</h4>
-                        <button class="btn btn-primary-custom btn-sm">+ Emitir Nueva Credencial</button>
-                    </div>
-                    <p class="text-secondary small mb-4">Consulta, aprueba, suspende o revoca credenciales del sistema.</p>
-                    <div class="table-responsive">
-                        <table class="table table-dark align-middle">
-                            <thead>
-                                <tr class="text-secondary small">
-                                    <th>CÓDIGO</th>
-                                    <th>TITULAR</th>
-                                    <th>TIPO</th>
-                                    <th>ESTADO</th>
-                                    <th>ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="fw-mono">CRED-2024-0841</td>
-                                    <td>Ana María Torres Vega</td>
-                                    <td>Participación Semillero</td>
-                                    <td><span class="badge bg-success">Activa</span></td>
-                                    <td>
-                                        <button class="btn btn-outline-custom btn-sm py-0">Suspender</button>
-                                        <button class="btn btn-outline-danger btn-sm py-0 ms-1">Revocar</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            }
-            else if (seccionActiva == "firmas")
-            {
-                <div class="card-custom p-4">
-                    <h4 class="fw-bold text-white mb-2">Comprobar y Validar Firmas Digitales</h4>
-                    <p class="text-secondary small mb-4">Verifica la validez matemática y la clave criptográfica de las credenciales firmadas.</p>
-                    
-                    <div class="mb-3">
-                        <label class="form-label text-secondary small">Ingrese Hash o Identificador de Credencial</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control bg-dark text-white border-secondary" placeholder="Ej: CRED-2024-0841" />
-                            <button class="btn btn-primary-custom">Validar Firma</button>
+                        @if (usuarios.Count == 0) { <p class="text-secondary">No hay usuarios activos.</p> }
+                        else
+                        {
+                            <div class="table-responsive"><table class="table table-dark table-hover align-middle">
+                                <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Acción</th></tr></thead>
+                                <tbody>
+                                    @foreach (var u in usuarios)
+                                    {
+                                        <tr @key="u.Id">
+                                            <td>@u.Nombre</td><td>@u.Correo</td>
+                                            <td><select class="form-select form-select-sm bg-dark text-white border-secondary" @bind="u.RolSeleccionado">
+                                                <option value="ESTUDIANTE">ESTUDIANTE</option><option value="DOCENTE">DOCENTE</option><option value="COORDINADOR">COORDINADOR</option>
+                                            </select></td>
+                                            <td><button class="btn btn-sm btn-primary-custom" disabled="@cargando" @onclick="() => GuardarRolAsync(u)">Guardar rol</button></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table></div>
+                        }
+                    </section>
+                }
+                else if (seccionActiva == "permisos")
+                {
+                    <section class="card-custom p-4 mb-4">
+                        <h4 class="text-white fw-bold">Gestionar permisos por rol</h4>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4"><label class="form-label text-secondary">Rol</label>
+                                <select class="form-select bg-dark text-white border-secondary" @bind="rolPermisos" @bind:after="CargarPermisosAsync">
+                                    <option value="ESTUDIANTE">ESTUDIANTE</option><option value="DOCENTE">DOCENTE</option><option value="COORDINADOR">COORDINADOR</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4"><button class="btn btn-outline-light" disabled="@cargando" @onclick="CargarPermisosAsync">Actualizar permisos</button></div>
                         </div>
-                    </div>
-
-                    <div class="p-3 bg-dark border border-success rounded text-success small mt-4">
-                        ✓ Criptografía verificada: Firma válida registrada en el nodo institucional.
-                    </div>
-                </div>
-            }
-            else if (seccionActiva == "usuarios")
-            {
-                <div class="card-custom p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="fw-bold text-white m-0">Gestión de Usuarios y Roles</h4>
-                        <button class="btn btn-primary-custom btn-sm">+ Registrar Usuario</button>
-                    </div>
-                    <p class="text-secondary small mb-4">Asigna permisos de Administrador, Docente o Titular.</p>
-                    
-                    <table class="table table-dark align-middle">
-                        <thead>
-                            <tr class="text-secondary small">
-                                <th>USUARIO</th>
-                                <th>CORREO</th>
-                                <th>ROL</th>
-                                <th>ACCIONES</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Ana María Torres</td>
-                                <td>ana.torres@institucion.edu.co</td>
-                                <td><span class="badge bg-info">Titular</span></td>
-                                <td><button class="btn btn-outline-custom btn-sm py-0">Editar Rol</button></td>
-                            </tr>
-                            <tr>
-                                <td>Carlos Ramírez</td>
-                                <td>carlos.ramirez@institucion.edu.co</td>
-                                <td><span class="badge bg-warning">Docente</span></td>
-                                <td><button class="btn btn-outline-custom btn-sm py-0">Editar Rol</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            }
-             else if (seccionActiva == "configuracion")
-            {
-                <div class="card-custom p-4" style="max-width: 650px;">
-                    <h4 class="fw-bold text-white mb-3">Parámetros Generales de la Plataforma</h4>
-                    <div class="mb-3">
-                        <label class="form-label text-secondary small">Nombre de la Institución / Semillero</label>
-                        <input type="text" class="form-control bg-dark text-white border-secondary" value="VC-Semilleros" />
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label text-secondary small">Vigor de Credenciales por Defecto (Meses)</label>
-                        <input type="number" class="form-control bg-dark text-white border-secondary" value="12" />
-                    </div>
-                    <button class="btn btn-primary-custom">Guardar Parámetros</button>
-                </div>
-            }
+                        @if (permisos.Count == 0) { <p class="text-secondary mt-3">No hay permisos registrados. Puedes crear uno abajo.</p> }
+                        else
+                        {
+                            <div class="table-responsive mt-3"><table class="table table-dark align-middle">
+                                <thead><tr><th>Asignado</th><th>Permiso</th><th>Descripción</th></tr></thead><tbody>
+                                    @foreach (var permiso in permisos)
+                                    {
+                                        <tr @key="permiso.Id"><td><input type="checkbox" class="form-check-input" @bind="permiso.Asignado" /></td><td>@permiso.Nombre</td><td>@permiso.Descripcion</td></tr>
+                                    }
+                                </tbody></table></div>
+                            <button class="btn btn-primary-custom" disabled="@cargando" @onclick="GuardarPermisosAsync">Guardar permisos de @rolPermisos</button>
+                        }
+                    </section>
+                    <section class="card-custom p-4" style="max-width:800px;">
+                        <h5 class="text-white fw-bold">Crear permiso</h5>
+                        <div class="mb-2"><label class="form-label text-secondary">Nombre (código)</label><input class="form-control bg-dark text-white border-secondary" maxlength="60" @bind="nuevoPermisoNombre" placeholder="CONSULTAR_CREDENCIAL" /></div>
+                        <div class="mb-3"><label class="form-label text-secondary">Descripción</label><input class="form-control bg-dark text-white border-secondary" maxlength="200" @bind="nuevoPermisoDescripcion" /></div>
+                        <button class="btn btn-outline-success" disabled="@cargando" @onclick="CrearPermisoAsync">Crear permiso</button>
+                    </section>
+                }
+                else if (seccionActiva == "parametros")
+                {
+                    <section class="card-custom p-4">
+                        <h4 class="text-white fw-bold">Parámetros generales de acceso</h4>
+                        <p class="text-secondary">Estos valores se guardan en la tabla de configuración de acceso de PostgreSQL.</p>
+                        @if (parametros.Count == 0) { <p class="text-secondary">No hay parámetros disponibles. Verifica que ejecutaste la migración <code>migracion_parametros_acceso.sql</code>.</p> }
+                        else
+                        {
+                            <div class="table-responsive"><table class="table table-dark align-middle">
+                                <thead><tr><th>Parámetro</th><th>Descripción</th><th>Valor</th><th>Acción</th></tr></thead><tbody>
+                                    @foreach (var par in parametros)
+                                    {
+                                        <tr @key="par.Clave"><td><code>@par.Clave</code></td><td>@par.Descripcion</td>
+                                            <td><input class="form-control bg-dark text-white border-secondary" maxlength="200" @bind="par.Valor" /></td>
+                                            <td><button class="btn btn-sm btn-primary-custom" disabled="@cargando" @onclick="() => GuardarParametroAsync(par)">Guardar</button></td></tr>
+                                    }
+                                </tbody></table></div>
+                        }
+                    </section>
+                }
+            </main>
         </div>
     </div>
-</div>
+}
 
 @code {
-    private string seccionActiva = "dashboard";
+    private bool accesoPermitido;
+    private bool cargando;
+    private bool esError;
+    private string mensaje = "";
+    private string seccionActiva = "semilleros";
+    private string nuevoNombre = "";
+    private int responsableId;
+    private string vc = "";
+    private string resultadoVerificacion = "";
+    private string rolPermisos = "DOCENTE";
+    private string nuevoPermisoNombre = "";
+    private string nuevoPermisoDescripcion = "";
+    private List<SemilleroVista> semilleros = new();
+    private List<UsuarioVista> docentes = new();
+    private List<UsuarioVista> usuarios = new();
+    private List<PermisoVista> permisos = new();
+    private List<ParametroVista> parametros = new();
 
-    private void CambiarSeccion(string seccion)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        if (!Sesion.EstaAutenticado) { Navigation.NavigateTo("/login", replace: true); return; }
+        var rol = Sesion.Rol?.Trim().ToUpperInvariant();
+        if (rol != "ADMINISTRADOR")
+        {
+            Navigation.NavigateTo(rol switch { "ESTUDIANTE" => "/Titular", "DOCENTE" => "/Docente", "COORDINADOR" => "/Coordinador", _ => "/login" }, replace: true);
+            return;
+        }
+        accesoPermitido = true;
+        await CargarDocentesAsync();
+        await CargarSemillerosAsync();
+        StateHasChanged();
+    }
+
+    private async Task CambiarSeccionAsync(string seccion)
     {
         seccionActiva = seccion;
+        mensaje = "";
+        if (seccion == "roles") await CargarUsuariosAsync();
+        else if (seccion == "permisos") await CargarPermisosAsync();
+        else if (seccion == "parametros") await CargarParametrosAsync();
     }
+
+    private string NombreDocente(int id) => docentes.FirstOrDefault(d => d.Id == id) is { } d ? $"{d.Nombre} ({d.Correo})" : $"Usuario #{id}";
+
+    private async Task CargarDocentesAsync()
+    {
+        try
+        {
+            var json = await Administracion.ListarUsuariosAsync<JsonElement>("DOCENTE");
+            docentes = LeerLista<UsuarioVista>(json);
+        }
+        catch (Exception ex) { docentes = new(); Mostrar($"No se pudieron cargar los docentes: {ex.Message}", true); }
+    }
+
+    private async Task CargarSemillerosAsync()
+    {
+        cargando = true;
+        try
+        {
+            var json = await SemillerosService.ListarAsync<JsonElement>();
+            semilleros = LeerLista<SemilleroVista>(json);
+            Mostrar(semilleros.Count == 0 ? "No hay semilleros registrados." : $"Se cargaron {semilleros.Count} semillero(s).", false);
+        }
+        catch (Exception ex) { Mostrar($"No se pudieron cargar los semilleros: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task CrearSemilleroAsync()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoNombre) || responsableId <= 0) { Mostrar("Escribe un nombre y selecciona un docente responsable.", true); return; }
+        cargando = true;
+        try
+        {
+            await SemillerosService.CrearAsync<object, JsonElement>(new { nombre = nuevoNombre.Trim(), responsableId });
+            nuevoNombre = ""; responsableId = 0;
+            Mostrar("Semillero creado en el backend.", false);
+            await CargarSemillerosAsync();
+        }
+        catch (Exception ex) { Mostrar($"No se pudo crear el semillero: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task CambiarEstadoAsync(SemilleroVista s)
+    {
+        cargando = true;
+        try
+        {
+            await SemillerosService.CambiarEstadoAsync<object, JsonElement>(s.Id, new { activo = !s.Activo });
+            Mostrar("Estado actualizado en el backend.", false);
+            await CargarSemillerosAsync();
+        }
+        catch (Exception ex) { Mostrar($"No se pudo cambiar el estado: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task VerificarAsync()
+    {
+        cargando = true; resultadoVerificacion = "";
+        try
+        {
+            var json = await VerificacionesService.VerificarAsync<object, JsonElement>(new { vc = vc.Trim() });
+            resultadoVerificacion = json.ValueKind != JsonValueKind.Undefined ? json.GetRawText() : "La API no devolvió un resultado.";
+            Mostrar("Verificación ejecutada en el backend.", false);
+        }
+        catch (Exception ex) { Mostrar($"No se pudo verificar la credencial: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task CargarUsuariosAsync()
+    {
+        cargando = true;
+        try
+        {
+            var json = await Administracion.ListarUsuariosAsync<JsonElement>();
+            usuarios = LeerLista<UsuarioVista>(json);
+            foreach (var u in usuarios) u.RolSeleccionado = u.Rol;
+            Mostrar($"Se cargaron {usuarios.Count} usuario(s).", false);
+        }
+        catch (Exception ex) { Mostrar($"No se pudieron cargar los usuarios: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task GuardarRolAsync(UsuarioVista u)
+    {
+        cargando = true;
+        try
+        {
+            await Administracion.CambiarRolAsync<object, JsonElement>(u.Id, new { rol = u.RolSeleccionado });
+            u.Rol = u.RolSeleccionado;
+            Mostrar($"Rol actualizado para {u.Nombre}.", false);
+            await CargarDocentesAsync();
+        }
+        catch (Exception ex) { Mostrar($"No se pudo actualizar el rol: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task CargarPermisosAsync()
+    {
+        cargando = true;
+        try
+        {
+            var json = await Administracion.ListarPermisosAsync<JsonElement>(rolPermisos);
+            permisos = LeerLista<PermisoVista>(json);
+            Mostrar($"Permisos cargados para {rolPermisos}.", false);
+        }
+        catch (Exception ex) { permisos = new(); Mostrar($"No se pudieron cargar los permisos. Si la tabla permiso no está creada, revisa el script de base de datos. {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task GuardarPermisosAsync()
+    {
+        cargando = true;
+        try
+        {
+            var ids = permisos.Where(p => p.Asignado).Select(p => p.Id).ToArray();
+            await Administracion.GuardarPermisosRolAsync<object, JsonElement>(rolPermisos, new { permisoIds = ids });
+            Mostrar($"Permisos guardados para {rolPermisos}.", false);
+            await CargarPermisosAsync();
+        }
+        catch (Exception ex) { Mostrar($"No se pudieron guardar los permisos: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task CrearPermisoAsync()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoPermisoNombre)) { Mostrar("Escribe el nombre del permiso.", true); return; }
+        cargando = true;
+        try
+        {
+            await Administracion.CrearPermisoAsync<object, JsonElement>(new { nombre = nuevoPermisoNombre.Trim(), descripcion = nuevoPermisoDescripcion.Trim() });
+            nuevoPermisoNombre = ""; nuevoPermisoDescripcion = "";
+            Mostrar("Permiso creado.", false);
+            await CargarPermisosAsync();
+        }
+        catch (Exception ex) { Mostrar($"No se pudo crear el permiso: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task CargarParametrosAsync()
+    {
+        cargando = true;
+        try
+        {
+            var json = await Administracion.ListarParametrosAccesoAsync<JsonElement>();
+            parametros = LeerLista<ParametroVista>(json);
+            Mostrar($"Se cargaron {parametros.Count} parámetro(s) de acceso.", false);
+        }
+        catch (Exception ex) { parametros = new(); Mostrar($"No se pudieron cargar los parámetros. Ejecuta la migración de acceso si la base ya existía. {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private async Task GuardarParametroAsync(ParametroVista par)
+    {
+        cargando = true;
+        try
+        {
+            await Administracion.GuardarParametroAccesoAsync<object, JsonElement>(par.Clave, new { valor = par.Valor });
+            Mostrar($"Parámetro {par.Clave} guardado.", false);
+            await CargarParametrosAsync();
+        }
+        catch (Exception ex) { Mostrar($"No se pudo guardar {par.Clave}: {ex.Message}", true); }
+        finally { cargando = false; }
+    }
+
+    private void Mostrar(string texto, bool error) { mensaje = texto; esError = error; }
+    private static readonly JsonSerializerOptions Opciones = new() { PropertyNameCaseInsensitive = true };
+    private static List<T> LeerLista<T>(JsonElement? json)
+    {
+        if (json is null || json.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined) return new();
+        var e = json.Value;
+        if (e.ValueKind == JsonValueKind.Object && e.TryGetProperty("datos", out var datos)) e = datos;
+        return e.ValueKind == JsonValueKind.Array ? JsonSerializer.Deserialize<List<T>>(e.GetRawText(), Opciones) ?? new() : new();
+    }
+
+    private sealed class SemilleroVista { public int Id { get; set; } public string Nombre { get; set; } = ""; public int ResponsableId { get; set; } public bool Activo { get; set; } }
+    private sealed class UsuarioVista
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = "";
+        public string Correo { get; set; } = "";
+        public string Rol { get; set; } = "";
+        public string RolSeleccionado { get; set; } = "";
+        public bool Activo { get; set; }
+    }
+    private sealed class PermisoVista { public int Id { get; set; } public string Nombre { get; set; } = ""; public string? Descripcion { get; set; } public bool Asignado { get; set; } }
+    private sealed class ParametroVista { public string Clave { get; set; } = ""; public string Valor { get; set; } = ""; public string Descripcion { get; set; } = ""; public DateTime ActualizadoEn { get; set; } }
 }
