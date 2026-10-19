@@ -1,0 +1,42 @@
+<!-- Proyecto de la capa de Persistencia: los repositorios que hablan con PostgreSQL.
+     Infrastructure depende SOLO de Domain (Art. 4): implementa sus puertos (interfaces). -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Sdk="Microsoft.NET.Sdk": el kit estándar de .NET para compilar bibliotecas de clases. -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- TargetFramework: versión de .NET para la que se compila (.NET 10). -->
+
+    <Nullable>enable</Nullable>
+    <!-- Nullable: el compilador avisa cuando algo que podría ser null se usa sin comprobarlo. -->
+
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ImplicitUsings: agrega solos los "using" más comunes. -->
+
+    <RootNamespace>VCSemilleros.Infrastructure</RootNamespace>
+    <!-- RootNamespace: espacio de nombres base de este proyecto. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- PackageReference: un paquete NuGet (biblioteca externa) que se descarga al compilar. -->
+
+    <PackageReference Include="Npgsql" Version="9.0.3" />
+    <!-- Npgsql: el cliente oficial de PostgreSQL para .NET (abre la conexión y envía el SQL).
+         Art. 3 lo permite. -->
+
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <!-- Dapper: ejecuta el SQL que escribimos a mano y convierte cada fila en un objeto.
+         JAMÁS genera SQL (Art. 3, D1). No es un ORM de entidades. -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VCSemilleros.Domain\VCSemilleros.Domain.csproj" />
+    <!-- ProjectReference: para implementar las interfaces IRepositorio… y usar los modelos de Domain. -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="bd\VC-semilleros.sql" />
+    <!-- None: el script de la BD aparece en el proyecto como archivo, pero NO se compila
+         ni se copia a la salida: es solo el script provisto, copiado tal cual (Art. 6). -->
+  </ItemGroup>
+</Project>

@@ -1,0 +1,28 @@
+<!-- Proyecto de la capa de Lógica: aquí viven los casos de uso (los servicios).
+     Application depende SOLO de Domain (Art. 4). -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Sdk="Microsoft.NET.Sdk": el kit estándar de .NET para compilar bibliotecas de clases. -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- TargetFramework: versión de .NET para la que se compila (.NET 10). -->
+
+    <Nullable>enable</Nullable>
+    <!-- Nullable: el compilador avisa cuando algo que podría ser null se usa sin comprobarlo. -->
+
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ImplicitUsings: agrega solos los "using" más comunes (System, System.Linq, etc.). -->
+
+    <RootNamespace>VCSemilleros.Application</RootNamespace>
+    <!-- RootNamespace: espacio de nombres base de este proyecto. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Un ItemGroup agrupa referencias: a otros proyectos o a paquetes NuGet. -->
+
+    <ProjectReference Include="..\VCSemilleros.Domain\VCSemilleros.Domain.csproj" />
+    <!-- ProjectReference: Application puede usar los modelos, excepciones y puertos de Domain.
+         Es la ÚNICA referencia que lleva: sin paquetes externos, y sin conocer Dapper,
+         Npgsql, HTTP ni Stellar. -->
+  </ItemGroup>
+</Project>

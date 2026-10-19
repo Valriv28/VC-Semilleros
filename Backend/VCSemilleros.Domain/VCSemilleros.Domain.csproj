@@ -1,0 +1,26 @@
+<!-- Un .csproj es el archivo de configuración de un proyecto de C#: dice con qué
+     versión de .NET se compila, qué paquetes usa y qué otros proyectos referencia. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Sdk="Microsoft.NET.Sdk": el kit estándar de .NET para compilar bibliotecas de clases. -->
+
+  <PropertyGroup>
+    <!-- Un PropertyGroup agrupa propiedades de compilación. -->
+
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- TargetFramework: la versión de .NET para la que se compila (.NET 10, Art. 3). -->
+
+    <Nullable>enable</Nullable>
+    <!-- Nullable: activa las referencias que no admiten null salvo que se marquen con "?".
+         Por eso el modelo escribe "string?" cuando una columna puede ser NULL. -->
+
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ImplicitUsings: agrega solos los "using" más comunes (System, System.Linq, etc.). -->
+
+    <RootNamespace>VCSemilleros.Domain</RootNamespace>
+    <!-- RootNamespace: el espacio de nombres base de todo el código de este proyecto. -->
+  </PropertyGroup>
+
+  <!-- IMPORTANTE (Art. 4): el Domain NO tiene ningún <PackageReference> ni <ProjectReference>.
+       No depende de PostgreSQL, ni de Stellar, ni de la interfaz: solo contiene modelos,
+       excepciones de negocio y los puertos (interfaces). -->
+</Project>

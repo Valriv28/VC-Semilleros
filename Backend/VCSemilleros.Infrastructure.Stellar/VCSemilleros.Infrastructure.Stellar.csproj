@@ -1,0 +1,28 @@
+<!-- Proyecto del adaptador hacia la red Stellar (Testnet).
+     Implementa el puerto IClienteStellar definido en Domain.
+     Depende SOLO de Domain (Art. 4): no referencia a Application ni a Api. -->
+<Project Sdk="Microsoft.NET.Sdk">
+	<!-- Sdk="Microsoft.NET.Sdk": el kit estándar de .NET para compilar bibliotecas de clases. -->
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<!-- TargetFramework: versión de .NET para la que se compila (.NET 10). -->
+
+		<Nullable>enable</Nullable>
+		<!-- Nullable: el compilador avisa cuando algo que podría ser null se usa sin comprobarlo. -->
+
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- ImplicitUsings: agrega solos los "using" más comunes. -->
+
+		<RootNamespace>VCSemilleros.Infrastructure.Stellar</RootNamespace>
+		<!-- RootNamespace: espacio de nombres base de este proyecto. -->
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\VCSemilleros.Domain\VCSemilleros.Domain.csproj" />
+		<!-- ProjectReference: para implementar IClienteStellar y usar ResultadoAnclaje y EvidenciaEnRed. -->
+	</ItemGroup>
+
+	<!-- NO hay <PackageReference> todavía: el paquete o cliente para hablar con Stellar queda
+       PENDIENTE hasta resolver la A4 (Art. 3). Se agregará en la Fase 6, solo si hace falta. -->
+</Project>

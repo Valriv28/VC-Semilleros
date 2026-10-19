@@ -1,0 +1,48 @@
+<!-- Proyecto de la capa de Interfaz: controladores, peticiones y Program.cs (el ensamblador).
+     Api conoce todos los demás proyectos, pero solo para ensamblarlos (Art. 4). -->
+<Project Sdk="Microsoft.NET.Sdk.Web">
+	<!-- Sdk="Microsoft.NET.Sdk.Web": el kit de .NET para aplicaciones web (ASP.NET Core).
+       Trae Kestrel (el servidor web), el enrutamiento y los controladores. -->
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<!-- TargetFramework: versión de .NET para la que se compila (.NET 10). -->
+
+		<Nullable>enable</Nullable>
+		<!-- Nullable: el compilador avisa cuando algo que podría ser null se usa sin comprobarlo. -->
+
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- ImplicitUsings: agrega solos los "using" más comunes de una aplicación web. -->
+
+		<RootNamespace>VCSemilleros.Api</RootNamespace>
+		<!-- RootNamespace: espacio de nombres base de este proyecto. -->
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
+		<!-- Swashbuckle.AspNetCore: genera la documentación Swagger y la página /swagger
+         para ver y probar los endpoints. Art. 3 y plan §1 lo permiten. -->
+
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
+		<!-- NUEVO (enmienda acordada al Art. 3): JwtBearer valida el token JWT que viaja en la cabecera
+         "Authorization: Bearer ..." y deja saber quién llama y con qué rol, para aplicar los
+         permisos por rol (RF2). También trae lo necesario para FIRMAR el token al ingresar (E2).
+         Solo la Api lo referencia: Application y Domain siguen sin paquetes externos. -->
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\VCSemilleros.Domain\VCSemilleros.Domain.csproj" />
+		<!-- Domain: modelos, excepciones (NoEncontradoExcepcion) y puertos. -->
+
+		<ProjectReference Include="..\VCSemilleros.Application\VCSemilleros.Application.csproj" />
+		<!-- Application: los servicios que llaman los controladores. -->
+
+		<ProjectReference Include="..\VCSemilleros.Infrastructure\VCSemilleros.Infrastructure.csproj" />
+		<!-- Infrastructure: los repositorios PostgreSQL; Program.cs los registra en la inyección
+         de dependencias (es el único lugar que conoce clases concretas). -->
+
+		<ProjectReference Include="..\VCSemilleros.Infrastructure.Stellar\VCSemilleros.Infrastructure.Stellar.csproj" />
+		<!-- Infrastructure.Stellar: el adaptador que el equipo construye por aparte. Program.cs lo registrará
+         cuando exista; mientras tanto, esta referencia no aporta clases. -->
+	</ItemGroup>
+</Project>

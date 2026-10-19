@@ -1,0 +1,47 @@
+<!-- Proyecto de pruebas. Los servicios se prueban con repositorios y cliente de Stellar FALSOS,
+     sin PostgreSQL ni red (criterio 12 de la spec).
+     Referencia a Api, Application y Domain (plan §2). -->
+<Project Sdk="Microsoft.NET.Sdk">
+	<!-- Sdk="Microsoft.NET.Sdk": el kit estándar de .NET para compilar bibliotecas de clases. -->
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<!-- TargetFramework: versión de .NET para la que se compila (.NET 10). -->
+
+		<Nullable>enable</Nullable>
+		<!-- Nullable: el compilador avisa cuando algo que podría ser null se usa sin comprobarlo. -->
+
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- ImplicitUsings: agrega solos los "using" más comunes. -->
+
+		<RootNamespace>VCSemilleros.Tests</RootNamespace>
+		<!-- RootNamespace: espacio de nombres base de este proyecto. -->
+
+		<IsPackable>false</IsPackable>
+		<!-- IsPackable=false: este proyecto no se publica como paquete NuGet; solo se ejecuta. -->
+
+		<IsTestProject>true</IsTestProject>
+		<!-- IsTestProject: le indica a "dotnet test" que aquí hay pruebas que ejecutar. -->
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+		<!-- Microsoft.NET.Test.Sdk: la pieza que permite a "dotnet test" descubrir y lanzar las pruebas.
+         Forma parte del ejecutor de xUnit que permite el Art. 3. -->
+
+		<PackageReference Include="xunit" Version="2.9.3" />
+		<!-- xunit: el marco de pruebas (atributos [Fact], [Theory] y las comprobaciones Assert). -->
+
+		<PackageReference Include="xunit.runner.visualstudio" Version="3.1.0" />
+		<!-- xunit.runner.visualstudio: el ejecutor de xUnit; lo usa "dotnet test" y el IDE
+         para encontrar y correr las pruebas. -->
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\VCSemilleros.Api\VCSemilleros.Api.csproj" />
+		<ProjectReference Include="..\VCSemilleros.Application\VCSemilleros.Application.csproj" />
+		<ProjectReference Include="..\VCSemilleros.Domain\VCSemilleros.Domain.csproj" />
+		<!-- Referencias a los tres proyectos que se prueban. NO referencia a Infrastructure ni
+         a Infrastructure.Stellar: las pruebas usan repositorios FALSOS en memoria. -->
+	</ItemGroup>
+</Project>
