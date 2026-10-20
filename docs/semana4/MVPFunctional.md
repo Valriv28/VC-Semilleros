@@ -24,9 +24,9 @@
 
 **Ajustes pendientes (no bloquean el cierre).**
 - Actualizar el Product Blueprint para que refleje la arquitectura en capas, evitando contradicciones documentales.
-- Suspensión/reactivación y resiliencia ante indisponibilidad de la red (Should Have).
-- Interoperabilidad con credenciales externas (Should Have).
-
+- Suspensión/reactivación y resiliencia ante indisponibilidad de la red 
+- Interoperabilidad con credenciales externas
+  
 **Priorización impacto/esfuerzo:** primero los invariantes de diseño (PII, separación de Stellar); después el recorte MoSCoW; al final las capacidades Should/Could que amplían sin bloquear el valor central.
 
 ---
