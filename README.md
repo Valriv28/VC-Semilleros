@@ -1,7 +1,9 @@
 
 # VC - Semilleros 
 
+Aplicación para la emisión y verificación de credenciales académicas digitales asociadas a la participación en semilleros de investigación, mediante estándares W3C y anclaje criptográfico en Stellar Testnet.
 
+Proyecto desarrollado en el programa Blockchain Builders 101.
 
 
 ## Authors
@@ -15,9 +17,11 @@
 
 
 ## Requisitos de Instalacion
- - .NET SDK
+ - .NET SDK compatible con el proyecto
  - Visual Studio 2022 o superior / Visual Studio Code
  - Git
+ - Conexión a Internet
+   
 ## Instalación y ejecución
 
 
@@ -54,8 +58,19 @@
 
 ### Inicio de sesión
 
+Para ingresar a la aplicación y consultar una credencial de demostración, utilizar los siguientes datos.
 
-Para ingresar a la aplicación, utiliza el correo electrónico `admin@semilleros.com`.
+**Correo electrónico**
 
-**Contraseña:** Ingresa con la contraseña `123456` .
+`Estudiante.prueba@example.com`
 
+**Contraseña**
+
+`ClavePrueba2026`
+
+
+## Documentación y evidencias
+
+La documentación funcional, los resultados del MVP, las evidencias de funcionamiento y el plan de validación se encuentran disponibles en el documento de cierre.
+
+[Consultar MVPFuncional.md](docs/semana4/MVPFuncional.md)
