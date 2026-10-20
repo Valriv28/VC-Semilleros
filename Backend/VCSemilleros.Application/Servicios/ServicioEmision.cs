@@ -109,6 +109,10 @@ public class ServicioEmision : IServicioEmision
             resultado = new ResultadoAnclaje(false, null, null, "No se pudo anclar en la red: " + ex.Message);
         }
 
+        Console.WriteLine(
+        $"[DIAGNÓSTICO ANCLAJE] {System.Text.Json.JsonSerializer.Serialize(resultado)}"
+        );
+
         var estadoAnclaje = resultado.Exitoso ? EstadoAnclaje.ANCLADO : EstadoAnclaje.FALLIDO;
         await _repositorioAnclaje.ActualizarResultadoAsync(
             anclajeId, estadoAnclaje,

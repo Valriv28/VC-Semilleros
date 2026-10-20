@@ -27,6 +27,9 @@ Thumbs.db
 ## --- Archivos de configuración local / secretos ---
 appsettings.Local.json
 appsettings.Development.json
+Backend/VCSemilleros.Api/GeneradorClaves/credencial-privada.pem
+Backend/VCSemilleros.Api/GeneradorClaves/bin/
+Backend/VCSemilleros.Api/GeneradorClaves/obj/
 
 ## --- Respaldos y archivos temporales ---
 *.bak

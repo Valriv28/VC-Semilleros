@@ -34,6 +34,25 @@ using VCSemilleros.Infrastructure.Stellar.Adaptadores;
 // Al crearlo, .NET ya lee appsettings.json y las variables de entorno (estas últimas ganan).
 var builder = WebApplication.CreateBuilder(args);
 
+var rutaClavePrivada = Path.GetFullPath(
+    Path.Combine(
+        builder.Environment.ContentRootPath,
+        "..",
+        "GeneradorClaves",
+        "credencial-privada.pem"
+    )
+);
+
+if (!File.Exists(rutaClavePrivada))
+{
+    throw new FileNotFoundException(
+        "No se encontró el archivo de la clave privada.",
+        rutaClavePrivada
+    );
+}
+
+builder.Configuration["Credenciales:ClavePrivada"] =
+    File.ReadAllText(rutaClavePrivada);
 // ----------------------------------------------------------------------------
 // 1) CONFIGURACIÓN OBLIGATORIA — si falta algo, la app NO arranca y dice qué falta
 // ----------------------------------------------------------------------------
@@ -243,10 +262,21 @@ builder.Services.AddScoped<IRepositorioCredencial>(_ => new RepositorioCredencia
 builder.Services.AddScoped<IRepositorioAnclaje>(_ => new RepositorioAnclajePostgreSql(cadenaConexion));
 
 // --- Puerto de salida hacia la red Stellar ---
-// PROVISIONAL: siempre responde "red no disponible" (el anclaje queda FALLIDO, propuesta P4).
-// CUANDO EXISTA ClienteStellar: cambiar ESTA línea por  AddScoped<IClienteStellar, ClienteStellar>()
-// (y registrar su configuración) y borrar ClienteStellarProvisional.cs. Nada más se toca.
-builder.Services.AddScoped<IClienteStellar, ClienteStellarProvisional>();
+// Adaptador real: habla con el puente de Attest. La sección "Stellar" de appsettings.json trae la
+// dirección del puente; la clave y las direcciones llegan por variables de entorno (Stellar__ApiKey,
+// Stellar__DireccionEmisora, Stellar__SchemaUid). Si faltan, el anclaje queda FALLIDO (P4) y el Back arranca igual.
+var opcionesStellar = new OpcionesStellar();
+builder.Configuration.GetSection("Stellar").Bind(opcionesStellar);
+builder.Services.AddSingleton(opcionesStellar);
+
+builder.Services.AddHttpClient<IClienteStellar, ClienteStellar>((sp, http) =>
+{
+    var o = sp.GetRequiredService<OpcionesStellar>();
+    http.BaseAddress = new Uri(o.BaseUrl);
+    http.Timeout = TimeSpan.FromSeconds(o.TimeoutSegundos);
+    if (!string.IsNullOrWhiteSpace(o.ApiKey))
+        http.DefaultRequestHeaders.Add("X-Bridge-Key", o.ApiKey);
+});
 
 // --- Servicios (casos de uso de la capa Application) ---
 // Los que solo necesitan interfaces se registran con la forma corta: <interfaz, clase>.
