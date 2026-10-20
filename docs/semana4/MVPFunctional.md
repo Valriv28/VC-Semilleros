@@ -1,10 +1,12 @@
-# Cierre del proyecto — VC-Semilleros
+# Cierre del MVP | VC-Semilleros
 
-**Equipo:** Valeria Rivera (coordinación y análisis) · Juan Pablo Acevedo (credenciales verificables) · Isabela Bohada (blockchain y seguridad) · Andrés Bedoya (desarrollo y UX) · Alexandra Guerrero (arquitectura).
+**Programa** Blockchain Builders 101  
+**Proyecto** VC-Semilleros  
+**Equipo** Valeria Rivera (coordinación y análisis), Juan Pablo Acevedo (credenciales verificables), Isabela Bohada (blockchain y seguridad), Andrés Bedoya (desarrollo y UX) y Alexandra Guerrero (arquitectura) 
 
-**Repositorio:** [VC-Semilleros](https://github.com/Valriv28/VC-Semilleros/tree/main)
+**Repositorio** [VC-Semilleros](https://github.com/Valriv28/VC-Semilleros/tree/main)
 
-> **Nota sobre despliegue y arquitectura:** el producto **no está desplegado en un entorno público**. La verificación se realiza ejecutando el repositorio localmente según el README y contrastando el flujo con el video público y la transacción en Stellar testnet. Adicionalmente, aunque el Product Blueprint describe una arquitectura hexagonal, la implementación final convergió a una **arquitectura en capas** (Api/Front, Application, Domain, Infrastructure), manteniendo la integración con Stellar aislada en su propio proyecto (`Infrastructure.Stellar`).
+El MVP se orienta a la emisión y verificación de credenciales académicas asociadas a la participación en semilleros de investigación. Stellar Testnet se emplea para registrar evidencia criptográfica de integridad, mientras las credenciales y los datos personales permanecen fuera de la red. La solución no cuenta con un despliegue público documentado. Las evidencias del cierre corresponden al código disponible, una demostración en video y una transacción registrada en Testnet.
 
 ---
 
@@ -12,34 +14,46 @@
 
 
 **Aprendizajes.**
-1. **La integración toma más tiempo del que se planea:** Subestimamos seriamente el tiempo y el esfuerzo que requiere conectar todas las piezas del sistema. Ajustar la capa de infraestructura, los flujos de datos y la lógica de Stellar tomó más horas de las previstas, lo que nos enseñó a dimensionar mejor los tiempos de integración en futuros proyectos.
-2. **Los verificadores no necesitan toda la data, solo el hash:** Descubrimos que para el tercero que recibe el certificado, la privacidad es clave. No necesitan ver el expediente completo del estudiante ni la credencial entera en la red; con validar que el hash de su documento coincide con el anclaje criptográfico, les basta para confiar en la autenticidad.
-3. **Blockchain no es una base de datos:** Entendimos que intentar almacenar la información o el certificado completo en la blockchain es un error conceptual. El enfoque correcto (y el que finalmente aplicamos) es usar Stellar únicamente como un ancla de integridad, manteniendo los datos personales y el documento fuera de la red.
+El desarrollo evidenció que la mayor complejidad no estaba en cada componente por separado, sino en la integración entre el registro de asistencia, la emisión de credenciales, la verificación y Stellar. Este aprendizaje permitió delimitar mejor el alcance del MVP y concentrar el esfuerzo en el flujo principal.
+
+Otra decisión relevante fue utilizar blockchain como mecanismo de anclaje, no como repositorio de certificados. La comparación del hash permite comprobar integridad, pero no acredita por sí sola la identidad del emisor, su autorización ni la vigencia de una credencial. Esta distinción debe mantenerse tanto en la interfaz como en la documentación.
 
 
 **Ajustes ya aplicados antes del cierre.**
-- **Enfoque de Stellar:** Reorientamos la integración para usar la red exclusivamente como mecanismo de anclaje de evidencia, garantizando que no se suba información personal ni la credencial completa.
-- **Flujo de verificación:** Simplificamos lo que el verificador externo tiene que ver, centrando la interfaz en la validación del hash y el estado de la credencial.
-- **Separación de capas:** Aislamos la lógica de Stellar en su propio proyecto de infraestructura (`VCSemilleros.Infrastructure.Stellar`), lo que evitó que un retraso en la red bloqueara el resto de la aplicación.
+| Prioridad | Ajuste | Impacto | Esfuerzo |
+|---|---|---|---|
+| 1 | Limitar el uso de Stellar al anclaje de evidencia, sin registrar credenciales completas ni datos personales | Alto | Medio |
+| 2 | Simplificar la consulta de verificación y presentar los resultados sin atribuir al hash controles que no ejecuta | Alto | Medio |
+| 3 | Organizar la solución en capas y aislar la conexión con Stellar en `VCSemilleros.Infrastructure.Stellar` | Medio | Medio |
 
 **Ajustes pendientes (no bloquean el cierre).**
-- Actualizar el Product Blueprint para que refleje la arquitectura en capas, evitando contradicciones documentales.
-- Suspensión/reactivación y resiliencia ante indisponibilidad de la red 
-- Interoperabilidad con credenciales externas
-  
-**Priorización impacto/esfuerzo:** primero los invariantes de diseño (PII, separación de Stellar); después el recorte MoSCoW; al final las capacidades Should/Could que amplían sin bloquear el valor central.
+| Prioridad | Ajuste | Impacto | Esfuerzo |
+|---|---|---|---|
+| 1 | Actualizar el Product Blueprint y los diagramas conforme a la arquitectura implementada | Alto | Bajo |
+| 2 | Completar y probar la gestión de estados y la respuesta ante fallas de Testnet | Alto | Alto |
+| 3 | Evaluar la interoperabilidad con credenciales emitidas por otras instituciones | Medio | Alto |
 
+El cierre conserva el alcance funcional alcanzado, identifica las capacidades que requieren validación adicional y evita presentar funcionalidades pendientes como resultados terminados.
+  
 ---
 
 ## 2. Riesgos y pendientes
 
 **Riesgos identificados antes del cierre.**
 
-1. **Deriva documental en la arquitectura.** El Blueprint describe hexagonal y el código usa capas. 
-2. **Publicación de datos personales on-chain.** Riesgo de exponer PII del estudiante en una red pública. 
-3. **El registro de asistencia original puede ser incorrecto.** Blockchain prueba integridad de lo anclado, no la veracidad de la asistencia. 
-4. **Usabilidad para verificadores no técnicos.** Un mecanismo criptográfico complejo puede hacer más difícil la consulta que el proceso actual. 
-5. **Dependencia de Stellar testnet.** Indisponibilidad o cambios de red durante la demo. 
+El cierre del MVP permitió identificar aspectos que requieren seguimiento para avanzar hacia una implementación institucional. Los riesgos se presentan según su relación con el alcance demostrado, las decisiones de diseño adoptadas y las actividades previstas para una siguiente etapa.
+
+**Protección de datos académicos.** La exposición de información personal en una blockchain pública constituye un riesgo relevante. Para reducirlo, la arquitectura plantea conservar las credenciales y los datos de los participantes fuera de Stellar y utilizar Testnet como mecanismo de anclaje criptográfico. Antes de un despliegue institucional será necesario revisar los campos de las transacciones y verificar que no revelen información identificable.
+
+**Confiabilidad de la asistencia.** La blockchain permite contrastar la integridad de una evidencia registrada, pero no garantiza que la asistencia de origen sea correcta. Por ello, el proceso de emisión debe apoyarse en reglas de validación y en responsables definidos. Las pruebas adicionales sobre correcciones y trazabilidad de registros se consideran parte del fortalecimiento posterior del sistema.
+
+**Seguridad y alcance de la verificación.** La comprobación del hash permite detectar alteraciones respecto de la evidencia anclada, pero no equivale por sí sola a verificar firma digital, legitimidad del emisor o vigencia. El cierre debe indicar con precisión cuáles de estas comprobaciones ejecuta la aplicación. La revisión de la custodia de claves y de los controles de verificación será prioritaria antes de operar con credenciales reales.
+
+**Dependencia de Stellar Testnet.** La red de pruebas permite demostrar el anclaje sin utilizar una infraestructura de producción, aunque puede presentar interrupciones o cambios de estado. La evidencia de la transacción y el video público facilitan la revisión del resultado obtenido. Para una versión posterior se contemplan pruebas de recuperación, reintentos y conciliación de operaciones.
+
+**Consistencia documental y experiencia de uso.** La implementación se organizó en capas, mientras que el Blueprint inicial planteaba una arquitectura hexagonal. La actualización de los diagramas y de la decisión arquitectónica queda identificada como ajuste documental. Asimismo, las pruebas con participantes, tutores y verificadores externos permitirán comprobar si la consulta resulta clara para usuarios no técnicos.
+
+Estos puntos no se presentan como funcionalidades concluidas. El cierre corresponde al alcance demostrado del MVP; la interoperabilidad con otras instituciones, la gestión avanzada de estados y las pruebas de operación institucional se mantienen como líneas de evolución sujetas a priorización y validación. 
 
 
 - **Video público** demostrando el flujo end-to-end: [Video](https://youtu.be/sxlGqYURlUY). 
@@ -49,17 +63,11 @@
 
 ## 3. Plan de validación con usuarios
 
-**A quiénes.** Se validará con los tres perfiles del Problem Brief:
-- **Participantes de semilleros** (usuario principal): necesitan demostrar asistencia y conservar su credencial.
-- **Tutores y área de Semilleros de Investigación** (operadores): registran asistencia, gestionan periodos y solicitan emisión.
-- **Verificadores externos** (otra institución, convocatoria o tercero): necesitan comprobar autenticidad, integridad y vigencia sin contactar al emisor.
+La validación buscará establecer si VC Semilleros responde a una necesidad concreta y si sus funciones principales pueden utilizarse sin conocimientos de blockchain. El ejercicio se desarrollará con los tres perfiles contemplados en el Problem Brief. Los **participantes de semilleros** presentarán sus credenciales; los **tutores y responsables de semilleros** evaluarán el registro de asistencia y la emisión; los **verificadores externos** comprobarán la claridad y utilidad de la consulta.
 
-**Con qué métodos.**
-- **Entrevistas semiestructuradas** (20–30 min) con cada perfil para recoger expectativas y fricciones del proceso actual.
-- **Pruebas de usabilidad guiadas** sobre el repositorio ejecutado localmente (o sobre el video si el entorno no está disponible), con tareas concretas: emitir una credencial, presentarla, verificarla y consultar su estado.
-- **Registro de métricas de tarea**: tiempo por verificación, tasa de éxito sin ayuda, errores observados.
-- **Cuestionario breve post-tarea** (escala 1–5) sobre claridad y confianza en el resultado de verificación.
-- **Contraste con la transacción en Stellar testnet** para que el verificador compruebe el anclaje de forma independiente.
+Se propone una muestra exploratoria de **cinco participantes, dos tutores o responsables y tres verificadores externos**. Este tamaño permite detectar dificultades iniciales, aunque no sustenta conclusiones generalizables sobre todas las instituciones.
+
+La evaluación combinará entrevistas semiestructuradas de 20 a 30 minutos, pruebas de uso moderadas y un cuestionario breve con escala de 1 a 5. Las tareas se realizarán sobre una instancia funcional ejecutada localmente, siempre que esté disponible. El video demostrativo servirá como material de apoyo, pero no reemplazará la interacción directa con el producto. También se contrastará el anclaje con la transacción publicada en Stellar Testnet.
 
 **Hipótesis a comprobar.**
 - **H1 — Necesidad real:** existe demanda de verificación de certificados después de su emisión. *Criterio: ≥70% de los entrevistados reporta al menos un caso concreto de verificación post-emisión en los últimos 12 meses.*
@@ -67,18 +75,24 @@
 - **H3 — Usabilidad para no técnicos:** un verificador sin formación técnica completa la verificación sin ayuda. *Criterio: ≥80% de éxito sin asistencia y ≤2 minutos por verificación.*
 - **H4 — Claridad del resultado:** el resultado consolidado es comprensible y explicable. *Criterio: ≥4/5 en claridad percibida.*
 
-**Muestra y timeline (propuesta).** 5 participantes + 3 verificadores externos + 2 tutores/área de Semilleros, en un ciclo de 2–3 semanas: semana 1 entrevistas, semana 2 pruebas de usabilidad, semana 3 análisis y ajustes.
+Durante la **primera semana** se aplicarán entrevistas y se prepararán las tareas. En la **segunda** se realizarán las pruebas, con registro de tiempos, errores y solicitudes de ayuda. La **tercera semana** se dedicará al análisis de resultados y a la priorización de mejoras.
 
-**Cómo sabremos que se cumple.** Se considerará validada la propuesta si H1, H2 y H3 se cumplen simultáneamente con los criterios anteriores. Si H1 no se cumple, se revisará la justificación de blockchain; si H3 falla, se priorizará rediseño de la interfaz de verificación antes de ampliar alcance. Los resultados se documentarán en el repositorio con trazabilidad de cada sesión (sin datos personales).
+Los umbrales establecidos son criterios de evaluación propuestos, no resultados obtenidos. Si la necesidad de uso no se confirma, deberá revisarse la propuesta de valor. Si aparecen dificultades de ejecución o comprensión, tendrán prioridad los ajustes en el flujo y en la presentación del resultado. Los hallazgos se documentarán de manera agregada, sin publicar datos personales de los participantes.
+
 
 ---
 ## 4. Evidencia verificable
 
-> **Nota:** el producto **no está desplegado públicamente**. La verificación se realiza ejecutando el repositorio localmente según el README y contrastando el flujo con el video y la transacción en Stellar testnet.
+El MVP no tiene un despliegue público documentado. Los enlaces disponibles permiten revisar el trabajo desarrollado desde perspectivas complementarias, pero no constituyen por separado una prueba de funcionamiento integral.
 
-| Evidencia | Enlace |
-|---|---|
-| Repositorio del proyecto | [VC-Semilleros](https://github.com/Valriv28/VC-Semilleros/tree/main) |
-| Video público (flujo end-to-end) | [Video](https://youtu.be/sxlGqYURlUY).  |
-| Transacción en Stellar testnet (anclaje de evidencia) | [Ver en stellar.expert](https://stellar.expert/explorer/testnet/tx/ca54012f1c477aca1f96ffa8a4bbd10fcb43a6e5231846cc75c8fc1df8168684) |
+| Evidencia | Enlace | Alcance de la comprobación |
+|---|---|---|
+| Repositorio y documentación | [VC Semilleros en GitHub](https://github.com/Valriv28/VC-Semilleros/tree/main) | Permite examinar el código, su estructura y las instrucciones disponibles para la ejecución local |
+| Demostración del MVP | [Video público](https://youtu.be/sxlGqYURlUY) | Presenta el flujo mostrado durante la demostración del equipo |
+| Registro en blockchain | [Transacción en Stellar Testnet](https://stellar.expert/explorer/testnet/tx/ca54012f1c477aca1f96ffa8a4bbd10fcb43a6e5231846cc75c8fc1df8168684) | Permite consultar la operación registrada en la red de pruebas |
+
+Para reproducir la demostración, un evaluador deberá poder acceder al repositorio, seguir las instrucciones del README, ejecutar la aplicación localmente y localizar la transacción en el explorador de Stellar. La correspondencia entre una credencial y su anclaje requiere, además, disponer del procedimiento utilizado para generar y contrastar el hash, sin exponer información personal o claves privadas.
+
+**Comprobaciones previas a la entrega.** Verificar el acceso público a los tres enlaces, la suficiencia de las instrucciones de ejecución y la correspondencia entre la transacción y el flujo demostrado. El MVP utiliza funciones nativas de Stellar Testnet y no declara contratos inteligentes propios.
+
 ---
